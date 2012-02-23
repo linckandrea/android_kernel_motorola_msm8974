@@ -54,6 +54,9 @@
 
 module_param(rcu_expedited, int, 0);
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> e5a3e8f7631... rcu: Add RCU_FAST_NO_HZ tracing for idle exit
 #ifdef CONFIG_PREEMPT_RCU
 
 /*
@@ -81,8 +84,11 @@ void exit_rcu(void)
 }
 
 #endif /* #else #ifdef CONFIG_PREEMPT_RCU */
+<<<<<<< HEAD
 =======
 >>>>>>> 5946c5e11a3... rcu: Add a module parameter to force use of expedited RCU primitives
+=======
+>>>>>>> e5a3e8f7631... rcu: Add RCU_FAST_NO_HZ tracing for idle exit
 
 #ifdef CONFIG_DEBUG_LOCK_ALLOC
 static struct lock_class_key rcu_lock_key;
