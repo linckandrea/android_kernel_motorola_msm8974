@@ -3018,7 +3018,14 @@ void update_idle_cpu_load(struct rq *this_rq)
 	unsigned long pending_updates;
 
 	/*
-	 * bail if there's load or we're actually up-to-date.
+	 * Bloody broken means of dealing with nohz, but better than nothing..
+	 * jiffies is updated by one cpu, another cpu can drift wrt the jiffy
+	 * update and see 0 difference the one time and 2 the next, even though
+	 * we ticked at roughtly the same rate.
+	 *
+	 * Hence we only use this from nohz_idle_balance() and skip this
+	 * nonsense when called from the scheduler_tick() since that's
+	 * guaranteed a stable rate.
 	 */
 	if (load || curr_jiffies == this_rq->last_load_update_tick)
 		return;
@@ -3061,7 +3068,11 @@ void update_cpu_load_nohz(void)
 static void update_cpu_load_active(struct rq *this_rq)
 {
 	/*
+<<<<<<< HEAD
 	 * See the mess around update_idle_cpu_load() / update_cpu_load_nohz().
+=======
+	 * See the mess in update_idle_cpu_load().
+>>>>>>> 25a0d8370e3... sched/nohz: Fix rq->cpu_load[] calculations
 	 */
 	this_rq->last_load_update_tick = jiffies;
 	__update_cpu_load(this_rq, this_rq->load.weight, 1);
