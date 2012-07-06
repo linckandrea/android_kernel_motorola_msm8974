@@ -130,7 +130,12 @@ obj-$(CONFIG_CLZ_TAB) += clz_tab.o
 
 obj-$(CONFIG_QMI_ENCDEC) += qmi_encdec.o
 
+<<<<<<< HEAD
 obj-$(CONFIG_MOT_PATCH_KERNEL) += mot_patch_kernel.o
+=======
+obj-$(CONFIG_GENERIC_STRNCPY_FROM_USER) += strncpy_from_user.o
+obj-$(CONFIG_GENERIC_STRNLEN_USER) += strnlen_user.o
+>>>>>>> 1369192811e... ARM: 7449/1: use generic strnlen_user and strncpy_from_user functions
 
 hostprogs-y	:= gen_crc32table
 clean-files	:= crc32table.h
