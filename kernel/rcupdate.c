@@ -53,6 +53,7 @@
 #include "rcu.h"
 
 module_param(rcu_expedited, int, 0);
+<<<<<<< HEAD
 #ifdef CONFIG_PREEMPT_RCU
 
 /*
@@ -80,6 +81,8 @@ void exit_rcu(void)
 }
 
 #endif /* #else #ifdef CONFIG_PREEMPT_RCU */
+=======
+>>>>>>> 5946c5e11a3... rcu: Add a module parameter to force use of expedited RCU primitives
 
 #ifdef CONFIG_DEBUG_LOCK_ALLOC
 static struct lock_class_key rcu_lock_key;
