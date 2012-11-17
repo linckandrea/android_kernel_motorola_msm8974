@@ -17,5 +17,9 @@
 #include <asm-generic/mutex-xchg.h>
 #else
 #include <asm-generic/mutex-dec.h>
+<<<<<<< HEAD
 #endif
+=======
+>>>>>>> ca6e1078639... ARM: 7467/1: mutex: use generic xchg-based implementation for ARMv6+
 #endif
+#endif	/* _ASM_MUTEX_H */
