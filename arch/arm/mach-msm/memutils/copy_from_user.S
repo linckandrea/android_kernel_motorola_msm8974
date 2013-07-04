@@ -70,6 +70,9 @@
 
 	.macro ldstr8w ptrl ptrw reg1 reg2 reg3 reg4 reg5 reg6 reg7 reg8 abort
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 26067fa6eb4... msm: memutils: memcpy, memmove optimization
 	ldr1w \ptrl, \reg1, \abort
 	str1w \ptrw, \reg1, \abort
 	ldr1w \ptrl, \reg2, \abort
@@ -86,11 +89,14 @@
 	str1w \ptrw, \reg7, \abort
 	ldr1w \ptrl, \reg8, \abort
 	str1w \ptrw, \reg8, \abort
+<<<<<<< HEAD
 =======
 	ldr4w \ptrl, \reg1, \reg2, \reg3, \reg4, \abort
 	ldr4w \ptrl, \reg5, \reg6, \reg7, \reg8, \abort
 	stmia \ptrw!, {\reg1, \reg2, \reg3, \reg4, \reg5, \reg6, \reg7, \reg8}
 >>>>>>> e078878873e... msm: memutils: memcpy, memmove, copy_page optimization
+=======
+>>>>>>> 26067fa6eb4... msm: memutils: memcpy, memmove optimization
 	.endm
 
 	.macro str1b ptr reg cond=al abort

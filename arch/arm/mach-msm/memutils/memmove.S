@@ -57,14 +57,19 @@ ENTRY(memmove)
 
 	PLD(	pld	[r1, #-4]		)
 <<<<<<< HEAD
+<<<<<<< HEAD
 2:	PLD(	subs	r2, r2, #192		)
 =======
 2:	PLD(	subs	r2, r2, #320		)
 >>>>>>> e078878873e... msm: memutils: memcpy, memmove, copy_page optimization
+=======
+2:	PLD(	subs	r2, r2, #192		)
+>>>>>>> 26067fa6eb4... msm: memutils: memcpy, memmove optimization
 	PLD(	pld	[r1, #-68]		)
 	PLD(	pld	[r1, #-132]		)
 	PLD(	blt	4f			)
 	PLD(	pld	[r1, #-196]		)
+<<<<<<< HEAD
 <<<<<<< HEAD
 
 3:	PLD(	pld	[r1, #-260]		)
@@ -75,15 +80,24 @@ ENTRY(memmove)
 
 3:	PLD(	pld	[r1, #-388]		)
 >>>>>>> e078878873e... msm: memutils: memcpy, memmove, copy_page optimization
+=======
+
+3:	PLD(	pld	[r1, #-260]		)
+
+>>>>>>> 26067fa6eb4... msm: memutils: memcpy, memmove optimization
 4:		ldmdb	r1!, {r3, r4, r5, r6, r7, r8, ip, lr}
 		subs	r2, r2, #32
 		stmdb	r0!, {r3, r4, r5, r6, r7, r8, ip, lr}
 		bge	3b
 <<<<<<< HEAD
+<<<<<<< HEAD
 	PLD(	cmn	r2, #192		)
 =======
 	PLD(	cmn	r2, #320		)
 >>>>>>> e078878873e... msm: memutils: memcpy, memmove, copy_page optimization
+=======
+	PLD(	cmn	r2, #192		)
+>>>>>>> 26067fa6eb4... msm: memutils: memcpy, memmove optimization
 	PLD(	bge	4b			)
 
 5:		ands	ip, r2, #28
@@ -160,14 +174,19 @@ ENTRY(memmove)
 
 	PLD(	pld	[r1, #-4]		)
 <<<<<<< HEAD
+<<<<<<< HEAD
 	PLD(	subs	r2, r2, #192		)
 =======
 	PLD(	subs	r2, r2, #320		)
 >>>>>>> e078878873e... msm: memutils: memcpy, memmove, copy_page optimization
+=======
+	PLD(	subs	r2, r2, #192		)
+>>>>>>> 26067fa6eb4... msm: memutils: memcpy, memmove optimization
 	PLD(	pld	[r1, #-68]		)
 	PLD(	pld	[r1, #-132]		)
 	PLD(	blt	13f			)
 	PLD(	pld	[r1, #-196]		)
+<<<<<<< HEAD
 <<<<<<< HEAD
 12:	PLD(	pld	[r1, #-260]		)
 13:		ldmdb   r1!, {r7, r8, r9, ip}
@@ -196,6 +215,9 @@ ENTRY(memmove)
 	PLD(	pld	[r1, #-260]		)
 	PLD(	pld	[r1, #-324]		)
 12:	PLD(	pld	[r1, #-388]		)
+=======
+12:	PLD(	pld	[r1, #-260]		)
+>>>>>>> 26067fa6eb4... msm: memutils: memcpy, memmove optimization
 13:		ldmdb   r1!, {r7, r8, r9, ip}
 		mov     lr, r3, push #\push
 		subs    r2, r2, #32
@@ -217,8 +239,12 @@ ENTRY(memmove)
 		orr     r4, r4, r3, pull #\pull
 		stmdb   r0!, {r4 - r9, ip, lr}
 		bge	12b
+<<<<<<< HEAD
 	PLD(	cmn	r2, #320		)
 >>>>>>> e078878873e... msm: memutils: memcpy, memmove, copy_page optimization
+=======
+	PLD(	cmn	r2, #192		)
+>>>>>>> 26067fa6eb4... msm: memutils: memcpy, memmove optimization
 	PLD(	bge	13b			)
 
 		ldmfd	sp!, {r5 - r9}
