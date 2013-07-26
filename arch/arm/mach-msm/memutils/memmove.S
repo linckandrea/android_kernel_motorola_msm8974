@@ -56,19 +56,34 @@ ENTRY(memmove)
 	CALGN(	add	pc, r4, ip		)
 
 	PLD(	pld	[r1, #-4]		)
+<<<<<<< HEAD
 2:	PLD(	subs	r2, r2, #192		)
+=======
+2:	PLD(	subs	r2, r2, #320		)
+>>>>>>> e078878873e... msm: memutils: memcpy, memmove, copy_page optimization
 	PLD(	pld	[r1, #-68]		)
 	PLD(	pld	[r1, #-132]		)
 	PLD(	blt	4f			)
 	PLD(	pld	[r1, #-196]		)
+<<<<<<< HEAD
 
 3:	PLD(	pld	[r1, #-260]		)
 
+=======
+	PLD(	pld	[r1, #-260]		)
+	PLD(	pld	[r1, #-324]		)
+
+3:	PLD(	pld	[r1, #-388]		)
+>>>>>>> e078878873e... msm: memutils: memcpy, memmove, copy_page optimization
 4:		ldmdb	r1!, {r3, r4, r5, r6, r7, r8, ip, lr}
 		subs	r2, r2, #32
 		stmdb	r0!, {r3, r4, r5, r6, r7, r8, ip, lr}
 		bge	3b
+<<<<<<< HEAD
 	PLD(	cmn	r2, #192		)
+=======
+	PLD(	cmn	r2, #320		)
+>>>>>>> e078878873e... msm: memutils: memcpy, memmove, copy_page optimization
 	PLD(	bge	4b			)
 
 5:		ands	ip, r2, #28
@@ -127,7 +142,11 @@ ENTRY(memmove)
 		blt	18f
 
 
+<<<<<<< HEAD
 		.macro	backward_copy_shift pushshift pullshift
+=======
+		.macro	backward_copy_shift push pull
+>>>>>>> e078878873e... msm: memutils: memcpy, memmove, copy_page optimization
 
 		subs	r2, r2, #28
 		blt	14f
@@ -140,11 +159,16 @@ ENTRY(memmove)
 11:		stmfd	sp!, {r5 - r9}
 
 	PLD(	pld	[r1, #-4]		)
+<<<<<<< HEAD
 	PLD(	subs	r2, r2, #192		)
+=======
+	PLD(	subs	r2, r2, #320		)
+>>>>>>> e078878873e... msm: memutils: memcpy, memmove, copy_page optimization
 	PLD(	pld	[r1, #-68]		)
 	PLD(	pld	[r1, #-132]		)
 	PLD(	blt	13f			)
 	PLD(	pld	[r1, #-196]		)
+<<<<<<< HEAD
 12:	PLD(	pld	[r1, #-260]		)
 13:		ldmdb   r1!, {r7, r8, r9, ip}
 		mov     lr, r3, pushbits #\pushshift
@@ -168,6 +192,33 @@ ENTRY(memmove)
 		stmdb   r0!, {r4 - r9, ip, lr}
 		bge	12b
 	PLD(	cmn	r2, #192		)
+=======
+	PLD(	pld	[r1, #-260]		)
+	PLD(	pld	[r1, #-324]		)
+12:	PLD(	pld	[r1, #-388]		)
+13:		ldmdb   r1!, {r7, r8, r9, ip}
+		mov     lr, r3, push #\push
+		subs    r2, r2, #32
+		ldmdb   r1!, {r3, r4, r5, r6}
+		orr     lr, lr, ip, pull #\pull
+		mov     ip, ip, push #\push
+		orr     ip, ip, r9, pull #\pull
+		mov     r9, r9, push #\push
+		orr     r9, r9, r8, pull #\pull
+		mov     r8, r8, push #\push
+		orr     r8, r8, r7, pull #\pull
+		mov     r7, r7, push #\push
+		orr     r7, r7, r6, pull #\pull
+		mov     r6, r6, push #\push
+		orr     r6, r6, r5, pull #\pull
+		mov     r5, r5, push #\push
+		orr     r5, r5, r4, pull #\pull
+		mov     r4, r4, push #\push
+		orr     r4, r4, r3, pull #\pull
+		stmdb   r0!, {r4 - r9, ip, lr}
+		bge	12b
+	PLD(	cmn	r2, #320		)
+>>>>>>> e078878873e... msm: memutils: memcpy, memmove, copy_page optimization
 	PLD(	bge	13b			)
 
 		ldmfd	sp!, {r5 - r9}
@@ -175,25 +226,44 @@ ENTRY(memmove)
 14:		ands	ip, r2, #28
 		beq	16f
 
+<<<<<<< HEAD
 15:		mov     lr, r3, pushbits #\pushshift
 		ldr	r3, [r1, #-4]!
 		subs	ip, ip, #4
 		orr	lr, lr, r3, pullbits #\pullshift
+=======
+15:		mov     lr, r3, push #\push
+		ldr	r3, [r1, #-4]!
+		subs	ip, ip, #4
+		orr	lr, lr, r3, pull #\pull
+>>>>>>> e078878873e... msm: memutils: memcpy, memmove, copy_page optimization
 		str	lr, [r0, #-4]!
 		bgt	15b
 	CALGN(	cmp	r2, #0			)
 	CALGN(	bge	11b			)
 
+<<<<<<< HEAD
 16:		add	r1, r1, #(\pullshift / 8)
+=======
+16:		add	r1, r1, #(\pull / 8)
+>>>>>>> e078878873e... msm: memutils: memcpy, memmove, copy_page optimization
 		b	8b
 
 		.endm
 
 
+<<<<<<< HEAD
 		backward_copy_shift	pushshift=8	pullshift=24
 
 17:		backward_copy_shift	pushshift=16	pullshift=16
 
 18:		backward_copy_shift	pushshift=24	pullshift=8
+=======
+		backward_copy_shift	push=8	pull=24
+
+17:		backward_copy_shift	push=16	pull=16
+
+18:		backward_copy_shift	push=24	pull=8
+>>>>>>> e078878873e... msm: memutils: memcpy, memmove, copy_page optimization
 
 ENDPROC(memmove)

@@ -446,4 +446,8 @@ obj-$(CONFIG_BRICKED_HOTPLUG) += bricked_hotplug.o
 =======
 
 obj-y += fastchg.o
+<<<<<<< HEAD
 >>>>>>> 4ee7f6a2f28... msm: add missing USB fast charge files.
+=======
+obj-$(CONFIG_HAS_MACH_MEMUTILS) += memutils/
+>>>>>>> e078878873e... msm: memutils: memcpy, memmove, copy_page optimization

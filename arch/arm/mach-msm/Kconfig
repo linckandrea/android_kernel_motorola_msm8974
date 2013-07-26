@@ -531,7 +531,10 @@ config ARCH_MSM8226
 	#select MSM_RPM_LOG
 	#select MSM_RPM_STATS_LOG
 	select ARCH_WANT_KMAP_ATOMIC_FLUSH
+<<<<<<< HEAD
 	select ENABLE_VMALLOC_SAVINGS
+=======
+>>>>>>> e078878873e... msm: memutils: memcpy, memmove, copy_page optimization
 	select HAS_MACH_MEMUTILS
 
 config ARCH_MSMSAMARIUM
@@ -3088,6 +3091,7 @@ config WALL_CLK_SYSFS
 	 Support the wallclk directory in sysfs filesystem to enable the
 	 wall clock simulation and read the current SFN.
 
+<<<<<<< HEAD
 config KRAIT_REGULATOR
 	bool "Support Kraits powered via ganged regulators in the pmic"
 	help
@@ -3096,11 +3100,14 @@ config KRAIT_REGULATOR
 	 regulators running in ganged mode inside the PMIC. Enable
 	 this option to support such configurations.
 
+=======
+>>>>>>> e078878873e... msm: memutils: memcpy, memmove, copy_page optimization
 config HAS_MACH_MEMUTILS
 	default n
 	bool "Motorola MSM memcpy enhancements"
 	help
 	Faster memcpy performance for Krait
+<<<<<<< HEAD
 
 config MMI_RAM_INFO
 	depends on ARCH_MSM
@@ -3195,6 +3202,8 @@ config BRICKED_HOTPLUG
 		This enables kernel based multi core control.
 		(up/down hotplug based on load)
 
+=======
+>>>>>>> e078878873e... msm: memutils: memcpy, memmove, copy_page optimization
 endif
 
 config KERNEL_TEXT_MPU_PROT

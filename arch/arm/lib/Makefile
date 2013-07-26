@@ -12,8 +12,12 @@ lib-y		:= backtrace.o changebit.o csumipv6.o csumpartial.o   \
 		   strncpy_from_user.o strnlen_user.o                 \
 =======
 		   delay.o delay-loop.o findbit.o memchr.o memcpy.o   \
+<<<<<<< HEAD
 		   memmove.o memset.o memzero.o setbit.o              \
 >>>>>>> 1369192811e... ARM: 7449/1: use generic strnlen_user and strncpy_from_user functions
+=======
+		   memset.o memzero.o setbit.o                        \
+>>>>>>> e078878873e... msm: memutils: memcpy, memmove, copy_page optimization
 		   strchr.o strrchr.o                                 \
 		   testchangebit.o testclearbit.o testsetbit.o        \
 		   ashldi3.o ashrdi3.o lshrdi3.o muldi3.o             \
@@ -27,7 +31,11 @@ mmu-y	:= clear_user.o getuser.o putuser.o
 # probably faster on ARMv3 only
 ifneq ($(CONFIG_HAS_MACH_MEMUTILS),y)
   mmu-y += copy_page.o
+<<<<<<< HEAD
   lib-y += memmove.o memcpy.o
+=======
+  lib-y += memmove.o
+>>>>>>> e078878873e... msm: memutils: memcpy, memmove, copy_page optimization
 ifeq ($(CONFIG_PREEMPT),y)
   mmu-y	+= copy_from_user.o copy_to_user.o
 else
