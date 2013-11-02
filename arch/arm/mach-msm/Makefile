@@ -416,6 +416,8 @@ ifdef CONFIG_MSM_SLEEPER
 obj-$(CONFIG_MSM_SLEEPER) += msm-sleeper.o
 endif
 
+obj-$(CONFIG_MSM_CPUFREQ_LIMITER) += cpufreq_limit.o
+
 ifdef CONFIG_MSM_CPR
 obj-$(CONFIG_DEBUG_FS) += msm_cpr-debug.o
 endif
@@ -434,12 +436,3 @@ obj-$(CONFIG_MSM_DEVFREQ_CPUBW) += devfreq_cpubw.o
 
 obj-$(CONFIG_WALL_CLK) += wallclk.o
 obj-$(CONFIG_WALL_CLK_SYSFS) += wallclk_sysfs.o
-obj-$(CONFIG_HAS_MACH_MEMUTILS) += memutils/
-obj-$(CONFIG_ARCH_RANDOM) += early_random.o
-obj-$(CONFIG_PERFMAP) += perfmap.o
-obj-$(CONFIG_MMI_RAM_INFO) += mmi-ram-info.o
-obj-$(CONFIG_MMI_UNIT_INFO) += mmi-unit-info.o
-obj-$(CONFIG_MMI_SOC_INFO) += mmi_soc_info.o
-obj-$(CONFIG_MMI_MSM_PINMUX) += mmi-pinmux.o
-obj-$(CONFIG_PM_DEBUG) += pm_debug.o
-obj-$(CONFIG_MMI_MSM_CLOCK) += mmi-clock.o
