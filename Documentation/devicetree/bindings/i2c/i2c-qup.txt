@@ -20,6 +20,9 @@ Required properties:
 
 Optional property:
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> d27dceee7fa... qup_i2c: Initialize I2C resource before registering.
  - qcom,noise-rjct-scl : Number of low samples on clock line to consider it low.
 		       Range of values is 0-3. When missing default to 0.
  - qcom,noise-rjct-sda : Number of low samples on data  line to consider it low.
@@ -45,6 +48,7 @@ Optional property:
 		       unprepare_disable) is controlled by i2c-transaction's
 		       begining and ending. When missing, the clock's state
 		       is controlled by runtime-pm events.
+<<<<<<< HEAD
  - qcom,extended-recovery : Bitfield.
 		       Bit 0 will make the driver will try to do extra 1-pulse
 		       bit-banged recovery if the HW-driven 9-clk bus recovery
@@ -76,6 +80,8 @@ Optional property:
 		      begining and ending. When missing, the clock's state
 		      is controlled by runtime-pm events.
 >>>>>>> 90125f901b2... i2c_qup: Improve implementation of PM callbacks
+=======
+>>>>>>> d27dceee7fa... qup_i2c: Initialize I2C resource before registering.
 
 Example:
 	i2c_3: i2c@f9966000 {

@@ -520,6 +520,7 @@ struct msm_mhl_platform_data {
  *       ending. When false, the clock's state is controlled by runtime-pm
  *       events.
 <<<<<<< HEAD
+<<<<<<< HEAD
  * @extended_recovery : Bitfield.
  *       Bit 0 will make the driver will try to do extra 1-pulse
  *       bit-banged recovery if the HW-driven 9-clk bus recovery
@@ -533,6 +534,8 @@ struct msm_mhl_platform_data {
  *       system goes idle (optimises for performance). When unset, voting using
  *       runtime pm (optimizes for power).
 >>>>>>> 90125f901b2... i2c_qup: Improve implementation of PM callbacks
+=======
+>>>>>>> d27dceee7fa... qup_i2c: Initialize I2C resource before registering.
  * @master_id master id number of the i2c core or its wrapper (BLSP/GSBI).
  *       When zero, clock path voting is disabled.
  * @noise_rjct_sda Number of low samples on data line to consider it low.
