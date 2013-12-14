@@ -519,6 +519,7 @@ struct msm_mhl_platform_data {
  *       unprepare_disable) is controlled by i2c-transaction's begining and
  *       ending. When false, the clock's state is controlled by runtime-pm
  *       events.
+<<<<<<< HEAD
  * @extended_recovery : Bitfield.
  *       Bit 0 will make the driver will try to do extra 1-pulse
  *       bit-banged recovery if the HW-driven 9-clk bus recovery
@@ -527,6 +528,11 @@ struct msm_mhl_platform_data {
  *	 Bit 1 will make the driver attempt recovery regardless
  *	 of current mastership of the bus (useful for some
  *	 single-master devices with badly misbehaving slaves)
+=======
+ * @active_only when set, votes when system active and removes the vote when
+ *       system goes idle (optimises for performance). When unset, voting using
+ *       runtime pm (optimizes for power).
+>>>>>>> 90125f901b2... i2c_qup: Improve implementation of PM callbacks
  * @master_id master id number of the i2c core or its wrapper (BLSP/GSBI).
  *       When zero, clock path voting is disabled.
  * @noise_rjct_sda Number of low samples on data line to consider it low.
@@ -537,7 +543,10 @@ struct msm_mhl_platform_data {
 struct msm_i2c_platform_data {
 	int clk_freq;
 	bool clk_ctl_xfer;
+<<<<<<< HEAD
 	uint32_t extended_recovery;
+=======
+>>>>>>> 90125f901b2... i2c_qup: Improve implementation of PM callbacks
 	uint32_t rmutex;
 	const char *rsl_id;
 	uint32_t pm_lat;
