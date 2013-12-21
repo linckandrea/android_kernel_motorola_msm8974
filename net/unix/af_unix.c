@@ -770,7 +770,10 @@ static struct sock *unix_create1(struct net *net, struct socket *sock)
 	INIT_LIST_HEAD(&u->link);
 	mutex_init(&u->readlock); /* single task reading lock */
 	init_waitqueue_head(&u->peer_wait);
+<<<<<<< HEAD
 	init_waitqueue_func_entry(&u->peer_wake, unix_dgram_peer_wake_relay);
+=======
+>>>>>>> 823f77964d2... af_unix: speedup /proc/net/unix
 	unix_insert_socket(unix_sockets_unbound(sk), sk);
 out:
 	if (sk == NULL)
@@ -2448,6 +2451,7 @@ static struct sock *unix_from_bucket(struct seq_file *seq, loff_t *pos)
 			continue;
 		if (++count == offset)
 			break;
+<<<<<<< HEAD
 	}
 
 	return sk;
@@ -2467,6 +2471,27 @@ static struct sock *unix_next_socket(struct seq_file *seq,
 			return sk;
 	}
 
+=======
+	}
+
+	return sk;
+}
+
+static struct sock *unix_next_socket(struct seq_file *seq,
+				     struct sock *sk,
+				     loff_t *pos)
+{
+	unsigned long bucket;
+
+	while (sk > (struct sock *)SEQ_START_TOKEN) {
+		sk = sk_next(sk);
+		if (!sk)
+			goto next_bucket;
+		if (sock_net(sk) == seq_file_net(seq))
+			return sk;
+	}
+
+>>>>>>> 823f77964d2... af_unix: speedup /proc/net/unix
 	do {
 		sk = unix_from_bucket(seq, pos);
 		if (sk)
