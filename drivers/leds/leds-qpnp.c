@@ -1368,8 +1368,31 @@ static int qpnp_kpdbl_set(struct qpnp_led_data *led)
 		} else
 			pwm_disable(led->kpdbl_cfg->pwm_cfg->pwm_dev);
 
+<<<<<<< HEAD
 		if (num_kpbl_leds_on > 0)
 			num_kpbl_leds_on--;
+=======
+	if (!on_ms) {
+		return -EINVAL;
+	} else if (!off_ms) {
+		/* implement always on
+		 * note:
+		 * rgb_on_off_ms_store() bumps on_ms=0 up to RGB_LED_MIN_MS
+		 * so setting ms on/off to 0/0 in /sys results in seeing
+		 * 50/0 by the time we get here
+		 */
+		ramp_step_ms = 1000;
+		num_duty_pcts = 1;
+		pwm_cfg->duty_cycles->duty_pcts[0] =
+			(led->cdev.brightness *
+			led->rgb_cfg->calibrated_max *
+			100) /
+			(RGB_MAX_LEVEL * RGB_MAX_LEVEL);
+	} else {
+		ramp_step_ms = on_ms / 20;
+		ramp_step_ms = (ramp_step_ms < 5)? 5 : ramp_step_ms;
+		num_duty_pcts = RGB_LED_RAMP_STEP_COUNT;
+>>>>>>> c2cdbf5d599... hammerhead kernel: implement always on rgb led support
 
 		if (!num_kpbl_leds_on) {
 			rc = qpnp_led_masked_write(led, KPDBL_ENABLE(led->base),
@@ -3271,6 +3294,155 @@ static int __devinit qpnp_get_config_rgb(struct qpnp_led_data *led,
 	if (rc < 0)
 		return rc;
 
+<<<<<<< HEAD
+=======
+	rc = of_property_read_u32(node, "qcom,calibrated-max",
+		                &led->rgb_cfg->calibrated_max);
+	if (rc < 0)
+		led->rgb_cfg->calibrated_max = RGB_MAX_LEVEL;
+	else if (led->rgb_cfg->calibrated_max > RGB_MAX_LEVEL)
+		led->rgb_cfg->calibrated_max = RGB_MAX_LEVEL;
+
+	return 0;
+}
+
+static ssize_t rgb_on_off_ms_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct led_classdev *led_cdev = dev_get_drvdata(dev);
+	struct qpnp_led_data *led =
+		container_of(led_cdev, struct qpnp_led_data, cdev);
+
+	return sprintf(buf, "%d %d\n",
+			led->rgb_cfg->on_ms, led->rgb_cfg->off_ms);
+}
+
+static ssize_t rgb_on_off_ms_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t size)
+{
+	struct led_classdev *led_cdev = dev_get_drvdata(dev);
+	struct qpnp_led_data *led =
+		container_of(led_cdev, struct qpnp_led_data, cdev);
+	int on_ms;
+	int off_ms;
+
+	sscanf(buf, "%d %d", &on_ms, &off_ms);
+
+	if (on_ms < RGB_LED_MIN_MS)
+		on_ms = RGB_LED_MIN_MS;
+	if (on_ms > RGB_LED_MAX_MS)
+		on_ms = RGB_LED_MAX_MS;
+	if (off_ms > RGB_LED_MAX_MS)
+		off_ms = RGB_LED_MAX_MS;
+
+	if (on_ms == led->rgb_cfg->on_ms && off_ms == led->rgb_cfg->off_ms)
+		return size;
+
+	led->rgb_cfg->on_ms = on_ms;
+	led->rgb_cfg->off_ms = off_ms;
+
+	return size;
+}
+
+static ssize_t rgb_start_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct led_classdev *led_cdev = dev_get_drvdata(dev);
+	struct qpnp_led_data *led =
+		container_of(led_cdev, struct qpnp_led_data, cdev);
+
+	return sprintf(buf, "%d\n", led->rgb_cfg->start);
+}
+
+static ssize_t rgb_start_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t size)
+{
+	struct led_classdev *led_cdev = dev_get_drvdata(dev);
+	struct qpnp_led_data *led =
+		container_of(led_cdev, struct qpnp_led_data, cdev);
+	int ret = -EINVAL;
+	char *after;
+	unsigned long state = simple_strtoul(buf, &after, 10);
+	size_t count = after - buf;
+	struct qpnp_led_data *led_array;
+	int i;
+
+	if (isspace(*after))
+		count++;
+
+	if (count != size)
+		return -EINVAL;
+
+	if (led->rgb_cfg->start == (u8)state)
+		return count;
+
+	led_array = dev_get_drvdata(&led->spmi_dev->dev);
+
+	for (i = 0; i < led_array->num_leds; i++) {
+		switch (led_array[i].id) {
+		case QPNP_ID_RGB_RED:
+		case QPNP_ID_RGB_GREEN:
+		case QPNP_ID_RGB_BLUE:
+			if (led_array[i].rgb_cfg->start == (u8)state)
+				break;
+
+			led_array[i].rgb_cfg->start = (u8)state;
+			ret = qpnp_rgb_set(&led_array[i]);
+			if (ret < 0)
+				dev_err(led_array[i].cdev.dev,
+					"RGB set rgb start failed (%d)\n", ret);
+			/* Checking lut flags is used to glean if the led really was started */
+			if (!(led_array[i].rgb_cfg->pwm_cfg->lut_params.flags &
+						PM_PWM_LUT_RAMP_UP))
+				led_array[i].rgb_cfg->start = 0;
+			break;
+		default:
+			break;
+		}
+	}
+
+	return count;
+}
+
+static DEVICE_ATTR(on_off_ms, 0644, rgb_on_off_ms_show, rgb_on_off_ms_store);
+static DEVICE_ATTR(rgb_start, 0644, rgb_start_show, rgb_start_store);
+
+static int qpnp_led_create_file(struct qpnp_led_data *led)
+{
+	int rc;
+
+	switch (led->id) {
+	case QPNP_ID_WLED:
+	case QPNP_ID_FLASH1_LED0:
+	case QPNP_ID_FLASH1_LED1:
+		break;
+	case QPNP_ID_RGB_RED:
+	case QPNP_ID_RGB_GREEN:
+	case QPNP_ID_RGB_BLUE:
+		led->rgb_cfg->on_ms = RGB_LED_MIN_MS;
+		led->rgb_cfg->off_ms = RGB_LED_MIN_MS;
+		rc = device_create_file(led->cdev.dev, &dev_attr_on_off_ms);
+		if (rc) {
+			dev_err(led->cdev.dev,
+					"failed device_create_file(on_ms)\n");
+			return rc;
+		}
+
+		led->rgb_cfg->start = 0;
+		rc = device_create_file(led->cdev.dev, &dev_attr_rgb_start);
+		if (rc) {
+			dev_err(led->cdev.dev,
+					"failed device_create_file(start)\n");
+			device_remove_file(led->cdev.dev, &dev_attr_on_off_ms);
+			return rc;
+		}
+
+		break;
+	default:
+		break;
+	}
+
+>>>>>>> c2cdbf5d599... hammerhead kernel: implement always on rgb led support
 	return 0;
 }
 
