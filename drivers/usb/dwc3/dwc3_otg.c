@@ -18,6 +18,11 @@
 #include <linux/usb/hcd.h>
 #include <linux/platform_device.h>
 #include <linux/regulator/consumer.h>
+<<<<<<< HEAD
+=======
+#include <linux/slimport.h>
+#include <linux/fastchg.h>
+>>>>>>> c1798e4fc4a... usb: add working fast charge based on @faux123 work in this commit https://github.com/faux123/Nexus_5/commit/fb1a01502eda458e17120af4f6a1b297a9a679da
 
 #include "core.h"
 #include "dwc3_otg.h"
@@ -800,6 +805,7 @@ static void dwc3_otg_sm_work(struct work_struct *w)
 					work = 1;
 					break;
 				case DWC3_SDP_CHARGER:
+<<<<<<< HEAD
 					if (dotg->otg.gadget &&
 						usb_gadget_get_charge_enabled(
 							dotg->otg.gadget))
@@ -812,6 +818,19 @@ static void dwc3_otg_sm_work(struct work_struct *w)
 					mod_timer(&dotg->chg_check_timer,
 						CHG_RECHECK_DELAY);
 					work = 1;
+=======
+					dwc3_otg_set_power(phy,
+							force_fast_charge ? 
+							DWC3_IDEV_CHG_MAX : DWC3_IDEV_CHG_MIN);
+					if (!slimport_is_connected()) {
+						dwc3_otg_start_peripheral(
+								&dotg->otg,
+								1);
+						phy->state =
+							OTG_STATE_B_PERIPHERAL;
+						work = 1;
+					}
+>>>>>>> c1798e4fc4a... usb: add working fast charge based on @faux123 work in this commit https://github.com/faux123/Nexus_5/commit/fb1a01502eda458e17120af4f6a1b297a9a679da
 					break;
 				case DWC3_FLOATED_CHARGER:
 					if (dotg->charger_retry_count <
