@@ -110,7 +110,11 @@ irqreturn_t msm_slim_port_irq_handler(struct msm_slim_ctrl *dev, u32 pstat)
 	/* clear port interrupts */
 	writel_relaxed(pstat, PGD_THIS_EE(PGD_PORT_INT_CL_EEn,
 							dev->ver));
+<<<<<<< HEAD
 	SLIM_INFO(dev, "disabled overflow/underflow for port 0x%x", pstat);
+=======
+	pr_info("disabled overflow/underflow for port 0x%x", pstat);
+>>>>>>> e35691ea786... slim-ngd: NULL pointer check for client buffer
 
 	/*
 	 * Guarantee that port interrupt bit(s) clearing writes go
@@ -393,7 +397,11 @@ static int msm_slim_post_tx_msgq(struct msm_slim_ctrl *dev, u8 *buf, int len)
 	struct sps_pipe *pipe = endpoint->sps;
 	int ix = (buf - (u8 *)mem->base);
 
+<<<<<<< HEAD
 	phys_addr_t phys_addr = mem->phys_base + ix;
+=======
+	phys_addr_t phys_addr = mem->phys_base + (SLIM_MSGQ_BUF_LEN * ix);
+>>>>>>> e35691ea786... slim-ngd: NULL pointer check for client buffer
 
 	for (ret = 0; ret < ((len + 3) >> 2); ret++)
 		pr_debug("BAM TX buf[%d]:0x%x", ret, ((u32 *)buf)[ret]);
@@ -478,6 +486,7 @@ u32 *msm_slim_manage_tx_msgq(struct msm_slim_ctrl *dev, bool getbuf,
 		return NULL;
 	}
 
+<<<<<<< HEAD
 	retbuf = msm_slim_modify_tx_buf(dev, comp);
 	if (retbuf) {
 		mutex_unlock(&dev->tx_buf_lock);
@@ -496,6 +505,10 @@ u32 *msm_slim_manage_tx_msgq(struct msm_slim_ctrl *dev, bool getbuf,
 			mutex_unlock(&dev->tx_buf_lock);
 			return retbuf;
 		}
+=======
+	/* Calculate buffer index */
+	dev->tx_idx = ((int)(iovec.addr - mem->phys_base)) / SLIM_MSGQ_BUF_LEN;
+>>>>>>> e35691ea786... slim-ngd: NULL pointer check for client buffer
 
 		/*
 		 * superframe size will vary based on clock gear
@@ -1375,12 +1388,20 @@ int msm_slim_qmi_check_framer_request(struct msm_slim_ctrl *dev)
 	rc = qmi_send_req_wait(dev->qmi.handle, &req_desc, NULL, 0,
 					&resp_desc, &resp, sizeof(resp), 5000);
 	if (rc < 0) {
+<<<<<<< HEAD
 		SLIM_ERR(dev, "%s: QMI send req failed %d\n", __func__, rc);
+=======
+		dev_err(dev->dev, "%s: QMI send req failed %d\n", __func__, rc);
+>>>>>>> e35691ea786... slim-ngd: NULL pointer check for client buffer
 		return rc;
 	}
 	/* Check the response */
 	if (resp.resp.result != QMI_RESULT_SUCCESS_V01) {
+<<<<<<< HEAD
 		SLIM_ERR(dev, "%s: QMI request failed 0x%x (%s)\n",
+=======
+		dev_err(dev->dev, "%s: QMI request failed 0x%x (%s)\n",
+>>>>>>> e35691ea786... slim-ngd: NULL pointer check for client buffer
 			__func__, resp.resp.result, get_qmi_error(&resp.resp));
 		return -EREMOTEIO;
 	}

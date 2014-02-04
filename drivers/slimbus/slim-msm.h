@@ -17,7 +17,10 @@
 #include <linux/kthread.h>
 #include <mach/msm_qmi_interface.h>
 #include <mach/subsystem_notif.h>
+<<<<<<< HEAD
 #include <mach/msm_ipc_logging.h>
+=======
+>>>>>>> e35691ea786... slim-ngd: NULL pointer check for client buffer
 
 /* Per spec.max 40 bytes per received message */
 #define SLIM_MSGQ_BUF_LEN	40
@@ -214,7 +217,11 @@ struct msm_slim_qmi {
 	struct work_struct		ssr_up;
 };
 
+<<<<<<< HEAD
 struct msm_slim_ss {
+=======
+struct msm_slim_mdm {
+>>>>>>> e35691ea786... slim-ngd: NULL pointer check for client buffer
 	struct notifier_block nb;
 	void *ssr;
 	enum msm_ctrl_state state;
@@ -270,12 +277,16 @@ struct msm_slim_ctrl {
 	u32			ver;
 	struct msm_slim_qmi	qmi;
 	struct msm_slim_pdata	pdata;
+<<<<<<< HEAD
 	struct msm_slim_ss	ext_mdm;
 	struct msm_slim_ss	dsp;
 	int			default_ipc_log_mask;
 	int			ipc_log_mask;
 	bool			sysfs_created;
 	void			*ipc_slimbus_log;
+=======
+	struct msm_slim_mdm	mdm;
+>>>>>>> e35691ea786... slim-ngd: NULL pointer check for client buffer
 };
 
 struct msm_sat_chan {
