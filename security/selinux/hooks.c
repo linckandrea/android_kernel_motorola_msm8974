@@ -3929,8 +3929,14 @@ static int sock_has_perm(struct task_struct *task, struct sock *sk, u32 perms)
 	struct lsm_network_audit net = {0,};
 	u32 tsid = task_sid(task);
 
+<<<<<<< HEAD
 	if (unlikely(!sksec)) {
 		pr_warn("SELinux: sksec is NULL, socket is already freed\n");
+=======
+	if (unlikely(!sksec))
+	{
+		pr_debug(KERN_CRIT "[SELinux] sksec is NULL, socket is already freed. \n");
+>>>>>>> 06c94aaf345... selinux: add a ugly workaround to bail early when selinux tries to free a socket that is still in use and it ends in a Kernel panic. These lines are from opensource.samsung.com. While this will most likely put a bandaid over this Kernel panic it does not fix the bug so it might occur somewhere else if the same conditions are met but since I have only seen panics from this hook then we may as well sleep in peace.
 		return -EINVAL;
 	}
 
