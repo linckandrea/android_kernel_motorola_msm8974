@@ -23,6 +23,10 @@
 		qcom,chipid = <0x03030000>;
 
 		qcom,initial-pwrlevel = <1>;
+<<<<<<< HEAD
+=======
+		qcom,step-pwrlevel = <1>;
+>>>>>>> 40a6145d924... arm/dt: remove duplicated GPU entries so that users stop bitching around.
 
 		qcom,idle-timeout = <64>; //msec
 		qcom,bus-control;

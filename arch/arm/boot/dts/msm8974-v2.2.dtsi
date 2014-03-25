@@ -69,7 +69,11 @@
 		qcom,gpu-pwrlevel@2 {
 			reg = <2>;
 			qcom,gpu-freq = <320000000>;
+<<<<<<< HEAD
 			qcom,bus-freq = <5>;
+=======
+			qcom,bus-freq = <4>;
+>>>>>>> 40a6145d924... arm/dt: remove duplicated GPU entries so that users stop bitching around.
 			qcom,io-fraction = <66>;
 		};
 
