@@ -587,6 +587,19 @@ static int dwc3_otg_set_power(struct usb_phy *phy, unsigned mA)
 
 	dev_info(phy->dev, "Avail curr from USB = %u\n", mA);
 
+<<<<<<< HEAD
+=======
+	ac_psy = power_supply_get_by_name("ac");
+
+	if ((dotg->charger->chg_type == DWC3_DCP_CHARGER || dotg->charger->chg_type == DWC3_PROPRIETARY_CHARGER) && ac_psy) {
+		pr_info("%s: override dotg->psy to ac->psy\n", __func__);
+		saved_usb_psy = dotg->psy;
+		dotg->psy = ac_psy;
+	}
+	pr_info("dotg->charger->max_power = %d "\
+			"ma = %d\n", dotg->charger->max_power, mA);
+
+>>>>>>> b2dec558a73... Enable proprietary charger detection (e.g. iPhone/iPad charger) and treat it as AC power source.
 	if (dotg->charger->max_power <= 2 && mA > 2) {
 		/* Enable charging */
 		if (power_supply_set_online(dotg->psy, true))
