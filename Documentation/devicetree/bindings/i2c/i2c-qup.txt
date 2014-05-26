@@ -90,14 +90,19 @@ Example:
 		qcom,i2c-bus-freq = <100000>;
 		qcom,i2c-src-freq = <24000000>;
 <<<<<<< HEAD
+<<<<<<< HEAD
 		qcom,clk-ctl-xfer;
 =======
 <<<<<<< HEAD
-		qcom,master-id = <84>;
 =======
+>>>>>>> 1ea72ed892c... i2c_qup: Fix for unhandled IRQ
+		qcom,master-id = <84>;
 		qcom,clk-ctl-xfer;
+<<<<<<< HEAD
 >>>>>>> 5465f65... i2c_qup: Improve implementation of PM callbacks
 >>>>>>> 90125f901b2... i2c_qup: Improve implementation of PM callbacks
+=======
+>>>>>>> 1ea72ed892c... i2c_qup: Fix for unhandled IRQ
 		qcom,scl-gpio = <&msmgpio 7 0>;
 		qcom,sda-gpio = <&msmgpio 6 0>;
 	};
