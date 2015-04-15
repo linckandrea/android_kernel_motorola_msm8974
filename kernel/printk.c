@@ -49,6 +49,8 @@
 #define CREATE_TRACE_POINTS
 #include <trace/events/printk.h>
 
+#include "printk_interface.h"
+
 /*
  * Architectures can override it:
  */
@@ -824,6 +826,7 @@ asmlinkage int printk(const char *fmt, ...)
 {
 	va_list args;
 	int r;
+
 #ifdef CONFIG_MSM_RTB
 	void *caller = __builtin_return_address(0);
 
@@ -832,6 +835,11 @@ asmlinkage int printk(const char *fmt, ...)
 
 	if (is_emergency_dump())
 		return 0;
+
+	// if printk mode is disabled, terminate instantly
+	if (printk_mode == 0)
+		return 0;
+
 #ifdef CONFIG_KGDB_KDB
 	if (unlikely(kdb_trap_printk)) {
 		va_start(args, fmt);
@@ -928,6 +936,10 @@ asmlinkage int vprintk(const char *fmt, va_list args)
 	char *p;
 	size_t plen;
 	char special;
+
+	// if printk mode is disabled, terminate instantly
+	if (printk_mode == 0)
+			return 0;
 
 	boot_delay_msec();
 	printk_delay();
