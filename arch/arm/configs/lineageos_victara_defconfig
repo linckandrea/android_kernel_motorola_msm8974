@@ -2684,6 +2684,11 @@ CONFIG_HIDRAW=y
 CONFIG_UHID=y
 
 #
+# Faux Audio
+#
+CONFIG_SOUND_CONTROL_HAX_3_GPL=y
+
+#
 # USB Input Devices
 #
 CONFIG_USB_HID=y
