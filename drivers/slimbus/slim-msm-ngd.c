@@ -1174,7 +1174,7 @@ static int ngd_slim_rx_msgq_thread(void *data)
 
 	while (!kthread_should_stop()) {
 		set_current_state(TASK_INTERRUPTIBLE);
-		wait_for_completion(notify);
+		wait_for_completion_interruptible(notify);
 		/* 1 irq notification per message */
 		if (dev->use_rx_msgqs != MSM_MSGQ_ENABLED) {
 			msm_slim_rx_dequeue(dev, (u8 *)buffer);
@@ -1220,7 +1220,7 @@ static int ngd_notify_slaves(void *data)
 
 	while (!kthread_should_stop()) {
 		set_current_state(TASK_INTERRUPTIBLE);
-		wait_for_completion(&dev->qmi.slave_notify);
+		wait_for_completion_interruptible(&dev->qmi.slave_notify);
 		/* Probe devices for first notification */
 		if (!i) {
 			i++;
@@ -1266,13 +1266,11 @@ static void ngd_adsp_down(struct work_struct *work)
 	struct slim_controller *ctrl = &dev->ctrl;
 	struct slim_device *sbdev;
 
-	mutex_lock(&dev->ssr_lock);
 	ngd_slim_enable(dev, false);
 	/* device up should be called again after SSR */
 	list_for_each_entry(sbdev, &ctrl->devs, dev_list)
 		slim_report_absent(sbdev);
 	SLIM_INFO(dev, "SLIM ADSP SSR (DOWN) done\n");
-	mutex_unlock(&dev->ssr_lock);
 }
 
 static void ngd_adsp_up(struct work_struct *work)
@@ -1281,9 +1279,7 @@ static void ngd_adsp_up(struct work_struct *work)
 		container_of(work, struct msm_slim_qmi, ssr_up);
 	struct msm_slim_ctrl *dev =
 		container_of(qmi, struct msm_slim_ctrl, qmi);
-	mutex_lock(&dev->ssr_lock);
 	ngd_slim_enable(dev, true);
-	mutex_unlock(&dev->ssr_lock);
 }
 
 static ssize_t show_mask(struct device *device, struct device_attribute *attr,
@@ -1437,7 +1433,6 @@ static int __devinit ngd_slim_probe(struct platform_device *pdev)
 	init_completion(&dev->ctrl_up);
 	mutex_init(&dev->tx_lock);
 	mutex_init(&dev->tx_buf_lock);
-	mutex_init(&dev->ssr_lock);
 	spin_lock_init(&dev->rx_lock);
 	dev->ee = 1;
 	dev->irq = irq->start;
@@ -1728,3 +1723,4 @@ module_exit(ngd_slim_exit);
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("MSM Slimbus controller");
 MODULE_ALIAS("platform:msm-slim-ngd");
+

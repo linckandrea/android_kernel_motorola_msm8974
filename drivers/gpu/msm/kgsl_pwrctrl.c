@@ -44,7 +44,7 @@
  */
 #define INIT_UDELAY		200
 #define MAX_UDELAY		2000
-
+ 
 struct clk_pair {
 	const char *name;
 	uint map;
@@ -1087,7 +1087,7 @@ int kgsl_pwrctrl_init(struct kgsl_device *device)
 	pwr->thermal_pwrlevel = 0;
 
 	pwr->active_pwrlevel = pdata->init_level;
-	pwr->default_pwrlevel = pdata->init_level;
+	pwr->default_pwrlevel = pwr->min_pwrlevel;
 	pwr->init_pwrlevel = pdata->init_level;
 	for (i = 0; i < pdata->num_levels; i++) {
 		pwr->pwrlevels[i].gpu_freq =

@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2016, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2014, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -20,6 +20,7 @@
 #include <linux/debugfs.h>
 #include <linux/version.h>
 #include <linux/slab.h>
+#include <linux/pm_qos.h>
 #include <mach/board.h>
 #include <mach/iommu.h>
 #include <mach/iommu_domains.h>
@@ -33,6 +34,7 @@
 
 #define BASE_DEVICE_NUMBER 32
 
+static struct pm_qos_request msm_v4l2_vidc_pm_qos_request;
 struct msm_vidc_drv *vidc_driver;
 
 uint32_t msm_vidc_pwr_collapse_delay = 10000;
@@ -58,6 +60,11 @@ static int msm_v4l2_open(struct file *filp)
 		core->id, vid_dev->type);
 		return -ENOMEM;
 	}
+
+	dprintk(VIDC_DBG, "pm_qos_add with latency 1000usec\n");
+	pm_qos_add_request(&msm_v4l2_vidc_pm_qos_request,
+			PM_QOS_CPU_DMA_LATENCY, 1000);
+
 	clear_bit(V4L2_FL_USES_V4L2_FH, &vdev->flags);
 	filp->private_data = &(vidc_inst->event_handler);
 	return 0;
@@ -75,6 +82,12 @@ static int msm_v4l2_close(struct file *filp)
 			"Failed in %s for release output buffers\n", __func__);
 
 	rc = msm_vidc_close(vidc_inst);
+
+	dprintk(VIDC_DBG, "pm_qos_update and remove\n");
+	pm_qos_update_request(&msm_v4l2_vidc_pm_qos_request,
+			PM_QOS_DEFAULT_VALUE);
+	pm_qos_remove_request(&msm_v4l2_vidc_pm_qos_request);
+
 	return rc;
 }
 
@@ -285,7 +298,7 @@ static int read_platform_resources(struct msm_vidc_core *core,
 		struct platform_device *pdev)
 {
 	if (!core || !pdev) {
-		dprintk(VIDC_ERR, "%s: Invalid params %pK %pK\n",
+		dprintk(VIDC_ERR, "%s: Invalid params %p %p\n",
 			__func__, core, pdev);
 		return -EINVAL;
 	}
@@ -516,7 +529,7 @@ static int __devexit msm_vidc_remove(struct platform_device *pdev)
 	struct msm_vidc_core *core;
 
 	if (!pdev) {
-		dprintk(VIDC_ERR, "%s invalid input %pK", __func__, pdev);
+		dprintk(VIDC_ERR, "%s invalid input %p", __func__, pdev);
 		return -EINVAL;
 	}
 	core = pdev->dev.platform_data;
@@ -599,7 +612,6 @@ static int __init msm_vidc_init(void)
 
 	INIT_LIST_HEAD(&vidc_driver->cores);
 	mutex_init(&vidc_driver->lock);
-	msm_vidc_debugfs_init_drv();
 	vidc_driver->debugfs_root = debugfs_create_dir("msm_vidc", NULL);
 	if (!vidc_driver->debugfs_root)
 		dprintk(VIDC_ERR,
@@ -609,8 +621,6 @@ static int __init msm_vidc_init(void)
 	if (rc) {
 		dprintk(VIDC_ERR,
 			"Failed to register platform driver\n");
-		msm_vidc_debugfs_deinit_drv();
-		debugfs_remove_recursive(vidc_driver->debugfs_root);
 		kfree(vidc_driver);
 		vidc_driver = NULL;
 	}
@@ -621,7 +631,6 @@ static int __init msm_vidc_init(void)
 static void __exit msm_vidc_exit(void)
 {
 	platform_driver_unregister(&msm_vidc_driver);
-	msm_vidc_debugfs_deinit_drv();
 	debugfs_remove_recursive(vidc_driver->debugfs_root);
 	kfree(vidc_driver);
 	vidc_driver = NULL;
@@ -629,3 +638,4 @@ static void __exit msm_vidc_exit(void)
 
 module_init(msm_vidc_init);
 module_exit(msm_vidc_exit);
+

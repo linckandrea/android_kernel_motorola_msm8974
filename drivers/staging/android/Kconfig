@@ -21,9 +21,8 @@ config ASHMEM
 	  POSIX SHM but with different behavior and sporting a simpler
 	  file-based API.
 
-config ANDROID_LOGGER
-	tristate "Android log driver"
-	default n
+	  It is, in theory, a good memory allocator for low-memory devices,
+	  because it can discard shared memory units when under memory pressure.
 
 config LOGCAT_SIZE
 	int "Adjust android log buffer sizes"
@@ -61,6 +60,7 @@ config PERSISTENT_TRACER
 	depends on HAVE_FUNCTION_TRACER
 	select FUNCTION_TRACER
 	select ANDROID_PERSISTENT_RAM
+	default n
 	help
 	  persistent_trace traces function calls into a persistent ram
 	  buffer that can be decoded and dumped after reboot through
