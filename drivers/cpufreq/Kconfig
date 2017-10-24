@@ -263,7 +263,6 @@ config CPU_FREQ_GOV_INTELLIACTIVE
 
 	  If in doubt, say N.
 
-
 config CPU_FREQ_GOV_SMARTMAX_EPS
         tristate "'smartmax EPS' cpufreq policy governor"
         select CPU_FREQ_TABLE
