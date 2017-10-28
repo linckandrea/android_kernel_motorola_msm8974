@@ -4,7 +4,7 @@
  *  Copyright (C)  2001 Russell King
  *            (C)  2003 Venkatesh Pallipadi <venkatesh.pallipadi@intel.com>.
  *                      Jun Nakajima <jun.nakajima@intel.com>
- *            (c)  2013 The Linux Foundation. All rights reserved.
+ *            (c)  2013, 2015 The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -22,6 +22,7 @@
 #include <linux/hrtimer.h>
 #include <linux/tick.h>
 #include <linux/ktime.h>
+#include <linux/kthread.h>
 #include <linux/sched.h>
 #include <linux/input.h>
 #include <linux/workqueue.h>
@@ -103,6 +104,12 @@ struct cpu_dbs_info_s {
 	 * when user is changing the governor or limits.
 	 */
 	struct mutex timer_mutex;
+
+	struct task_struct *sync_thread;
+	wait_queue_head_t sync_wq;
+	atomic_t src_sync_cpu;
+	atomic_t being_woken;
+	atomic_t sync_enabled;
 };
 static DEFINE_PER_CPU(struct cpu_dbs_info_s, od_cpu_dbs_info);
 
@@ -112,7 +119,7 @@ static inline void dbs_timer_exit(struct cpu_dbs_info_s *dbs_info);
 static unsigned int dbs_enable;	/* number of CPUs using this policy */
 
 /*
- * dbs_mutex protects dbs_enable in governor start/stop.
+ * dbs_mutex protects dbs_enable and dbs_info during start/stop.
  */
 static DEFINE_MUTEX(dbs_mutex);
 
@@ -124,14 +131,6 @@ struct dbs_work_struct {
 };
 
 static DEFINE_PER_CPU(struct dbs_work_struct, dbs_refresh_work);
-
-struct dbs_sync_work_struct {
-	struct work_struct work;
-	unsigned int src_cpu;
-	unsigned int targ_cpu;
-};
-
-static DEFINE_PER_CPU(struct dbs_sync_work_struct, dbs_sync_work);
 
 static struct dbs_tuners {
 	unsigned int sampling_rate;
@@ -146,6 +145,7 @@ static struct dbs_tuners {
 	unsigned int sampling_down_factor;
 	int          powersave_bias;
 	unsigned int io_is_busy;
+	unsigned int input_boost;
 } dbs_tuners_ins = {
 	.up_threshold_multi_core = DEF_FREQUENCY_UP_THRESHOLD,
 	.up_threshold = DEF_FREQUENCY_UP_THRESHOLD,
@@ -157,41 +157,8 @@ static struct dbs_tuners {
 	.powersave_bias = 0,
 	.sync_freq = 0,
 	.optimal_freq = 0,
+	.input_boost = 0,
 };
-
-static inline u64 get_cpu_idle_time_jiffy(unsigned int cpu, u64 *wall)
-{
-	u64 idle_time;
-	u64 cur_wall_time;
-	u64 busy_time;
-
-	cur_wall_time = jiffies64_to_cputime64(get_jiffies_64());
-
-	busy_time  = kcpustat_cpu(cpu).cpustat[CPUTIME_USER];
-	busy_time += kcpustat_cpu(cpu).cpustat[CPUTIME_SYSTEM];
-	busy_time += kcpustat_cpu(cpu).cpustat[CPUTIME_IRQ];
-	busy_time += kcpustat_cpu(cpu).cpustat[CPUTIME_SOFTIRQ];
-	busy_time += kcpustat_cpu(cpu).cpustat[CPUTIME_STEAL];
-	busy_time += kcpustat_cpu(cpu).cpustat[CPUTIME_NICE];
-
-	idle_time = cur_wall_time - busy_time;
-	if (wall)
-		*wall = jiffies_to_usecs(cur_wall_time);
-
-	return jiffies_to_usecs(idle_time);
-}
-
-static inline cputime64_t get_cpu_idle_time(unsigned int cpu, cputime64_t *wall)
-{
-	u64 idle_time = get_cpu_idle_time_us(cpu, NULL);
-
-	if (idle_time == -1ULL)
-		return get_cpu_idle_time_jiffy(cpu, wall);
-	else
-		idle_time += get_cpu_iowait_time_us(cpu, wall);
-
-	return idle_time;
-}
 
 static inline cputime64_t get_cpu_iowait_time(unsigned int cpu, cputime64_t *wall)
 {
@@ -318,9 +285,11 @@ show_one(up_threshold_multi_core, up_threshold_multi_core);
 show_one(down_differential, down_differential);
 show_one(sampling_down_factor, sampling_down_factor);
 show_one(ignore_nice_load, ignore_nice);
+show_one(down_differential_multi_core, down_differential_multi_core);
 show_one(optimal_freq, optimal_freq);
 show_one(up_threshold_any_cpu_load, up_threshold_any_cpu_load);
 show_one(sync_freq, sync_freq);
+show_one(input_boost, input_boost);
 
 static ssize_t show_powersave_bias
 (struct kobject *kobj, struct attribute *attr, char *buf)
@@ -348,6 +317,7 @@ static void update_sampling_rate(unsigned int new_rate)
 	dbs_tuners_ins.sampling_rate = new_rate
 				     = max(new_rate, min_sampling_rate);
 
+	get_online_cpus();
 	for_each_online_cpu(cpu) {
 		struct cpufreq_policy *policy;
 		struct cpu_dbs_info_s *dbs_info;
@@ -382,6 +352,7 @@ static void update_sampling_rate(unsigned int new_rate)
 		}
 		mutex_unlock(&dbs_info->timer_mutex);
 	}
+	put_online_cpus();
 }
 
 static ssize_t store_sampling_rate(struct kobject *a, struct attribute *b,
@@ -393,6 +364,18 @@ static ssize_t store_sampling_rate(struct kobject *a, struct attribute *b,
 	if (ret != 1)
 		return -EINVAL;
 	update_sampling_rate(input);
+	return count;
+}
+
+static ssize_t store_input_boost(struct kobject *a, struct attribute *b,
+				const char *buf, size_t count)
+{
+	unsigned int input;
+	int ret;
+	ret = sscanf(buf, "%u", &input);
+	if (ret != 1)
+		return -EINVAL;
+	dbs_tuners_ins.input_boost = input;
 	return count;
 }
 
@@ -421,6 +404,20 @@ static ssize_t store_io_is_busy(struct kobject *a, struct attribute *b,
 	dbs_tuners_ins.io_is_busy = !!input;
 	return count;
 }
+
+static ssize_t store_down_differential_multi_core(struct kobject *a,
+			struct attribute *b, const char *buf, size_t count)
+{
+	unsigned int input;
+	int ret;
+
+	ret = sscanf(buf, "%u", &input);
+	if (ret != 1)
+		return -EINVAL;
+	dbs_tuners_ins.down_differential_multi_core = input;
+	return count;
+}
+
 
 static ssize_t store_optimal_freq(struct kobject *a, struct attribute *b,
 				   const char *buf, size_t count)
@@ -542,7 +539,7 @@ static ssize_t store_ignore_nice_load(struct kobject *a, struct attribute *b,
 		struct cpu_dbs_info_s *dbs_info;
 		dbs_info = &per_cpu(od_cpu_dbs_info, j);
 		dbs_info->prev_cpu_idle = get_cpu_idle_time(j,
-						&dbs_info->prev_cpu_wall);
+						&dbs_info->prev_cpu_wall, dbs_tuners_ins.io_is_busy);
 		if (dbs_tuners_ins.ignore_nice)
 			dbs_info->prev_cpu_nice = kcpustat_cpu(j).cpustat[CPUTIME_NICE];
 
@@ -585,6 +582,10 @@ static ssize_t store_powersave_bias(struct kobject *a, struct attribute *b,
 				POWERSAVE_BIAS_MINLEVEL));
 
 	dbs_tuners_ins.powersave_bias = input;
+
+	get_online_cpus();
+	mutex_lock(&dbs_mutex);
+
 	if (!bypass) {
 		if (reenable_timer) {
 			/* reinstate dbs timer */
@@ -606,8 +607,14 @@ static ssize_t store_powersave_bias(struct kobject *a, struct attribute *b,
 
 				cpumask_set_cpu(cpu, &cpus_timer_done);
 				if (dbs_info->cur_policy) {
+					dbs_timer_exit(dbs_info);
 					/* restart dbs timer */
+					mutex_lock(&dbs_info->timer_mutex);
 					dbs_timer_init(dbs_info);
+					/* Enable frequency synchronization
+					 * of CPUs */
+					mutex_unlock(&dbs_info->timer_mutex);
+					atomic_set(&dbs_info->sync_enabled, 1);
 				}
 skip_this_cpu:
 				unlock_policy_rwsem_write(cpu);
@@ -637,20 +644,27 @@ skip_this_cpu:
 
 			if (dbs_info->cur_policy) {
 				/* cpu using ondemand, cancel dbs timer */
-				mutex_lock(&dbs_info->timer_mutex);
 				dbs_timer_exit(dbs_info);
+				/* Disable frequency synchronization of
+				 * CPUs to avoid re-queueing of work from
+				 * sync_thread */
+				atomic_set(&dbs_info->sync_enabled, 0);
 
+				mutex_lock(&dbs_info->timer_mutex);
 				ondemand_powersave_bias_setspeed(
 					dbs_info->cur_policy,
 					NULL,
 					input);
-
 				mutex_unlock(&dbs_info->timer_mutex);
+
 			}
 skip_this_cpu_bypass:
 			unlock_policy_rwsem_write(cpu);
 		}
 	}
+
+	mutex_unlock(&dbs_mutex);
+	put_online_cpus();
 
 	return count;
 }
@@ -663,9 +677,11 @@ define_one_global_rw(sampling_down_factor);
 define_one_global_rw(ignore_nice_load);
 define_one_global_rw(powersave_bias);
 define_one_global_rw(up_threshold_multi_core);
+define_one_global_rw(down_differential_multi_core);
 define_one_global_rw(optimal_freq);
 define_one_global_rw(up_threshold_any_cpu_load);
 define_one_global_rw(sync_freq);
+define_one_global_rw(input_boost);
 
 static struct attribute *dbs_attributes[] = {
 	&sampling_rate_min.attr,
@@ -677,9 +693,11 @@ static struct attribute *dbs_attributes[] = {
 	&powersave_bias.attr,
 	&io_is_busy.attr,
 	&up_threshold_multi_core.attr,
+	&down_differential_multi_core.attr,
 	&optimal_freq.attr,
 	&up_threshold_any_cpu_load.attr,
 	&sync_freq.attr,
+	&input_boost.attr,
 	NULL
 };
 
@@ -739,7 +757,7 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 
 		j_dbs_info = &per_cpu(od_cpu_dbs_info, j);
 
-		cur_idle_time = get_cpu_idle_time(j, &cur_wall_time);
+		cur_idle_time = get_cpu_idle_time(j, &cur_wall_time, dbs_tuners_ins.io_is_busy);
 		cur_iowait_time = get_cpu_iowait_time(j, &cur_wall_time);
 
 		wall_time = (unsigned int)
@@ -927,14 +945,8 @@ static void do_dbs_timer(struct work_struct *work)
 			dbs_info->sample_type = DBS_SUB_SAMPLE;
 			delay = dbs_info->freq_hi_jiffies;
 		} else {
-			/* We want all CPUs to do sampling nearly on
-			 * same jiffy
-			 */
 			delay = usecs_to_jiffies(dbs_tuners_ins.sampling_rate
 				* dbs_info->rate_mult);
-
-			if (num_online_cpus() > 1)
-				delay -= jiffies % delay;
 		}
 	} else {
 		__cpufreq_driver_target(dbs_info->cur_policy,
@@ -992,6 +1004,7 @@ static void dbs_refresh_callback(struct work_struct *work)
 	struct cpu_dbs_info_s *this_dbs_info;
 	struct dbs_work_struct *dbs_work;
 	unsigned int cpu;
+	unsigned int target_freq;
 
 	dbs_work = container_of(work, struct dbs_work_struct, work);
 	cpu = dbs_work->cpu;
@@ -1008,17 +1021,22 @@ static void dbs_refresh_callback(struct work_struct *work)
 		goto bail_incorrect_governor;
 	}
 
-	if (policy->cur < policy->max) {
+	if (dbs_tuners_ins.input_boost)
+		target_freq = dbs_tuners_ins.input_boost;
+	else
+		target_freq = policy->max;
+
+	if (policy->cur < target_freq) {
 		/*
 		 * Arch specific cpufreq driver may fail.
 		 * Don't update governor frequency upon failure.
 		 */
-		if (__cpufreq_driver_target(policy, policy->max,
+		if (__cpufreq_driver_target(policy, target_freq,
 					CPUFREQ_RELATION_L) >= 0)
-			policy->cur = policy->max;
+			policy->cur = target_freq;
 
 		this_dbs_info->prev_cpu_idle = get_cpu_idle_time(cpu,
-				&this_dbs_info->prev_cpu_wall);
+				&this_dbs_info->prev_cpu_wall, dbs_tuners_ins.io_is_busy);
 	}
 
 bail_incorrect_governor:
@@ -1032,12 +1050,20 @@ bail_acq_sema_failed:
 static int dbs_migration_notify(struct notifier_block *nb,
 				unsigned long target_cpu, void *arg)
 {
-	struct dbs_sync_work_struct *sync_work =
-		&per_cpu(dbs_sync_work, target_cpu);
-	sync_work->src_cpu = (unsigned int)arg;
+	struct cpu_dbs_info_s *target_dbs_info =
+		&per_cpu(od_cpu_dbs_info, target_cpu);
 
-	queue_work_on(target_cpu, dbs_wq,
-		&per_cpu(dbs_sync_work, target_cpu).work);
+	atomic_set(&target_dbs_info->src_sync_cpu, (int)arg);
+	/*
+	* Avoid issuing recursive wakeup call, as sync thread itself could be
+	* seen as migrating triggering this notification. Note that sync thread
+	* of a cpu could be running for a short while with its affinity broken
+	* because of CPU hotplug.
+	*/
+	if (!atomic_cmpxchg(&target_dbs_info->being_woken, 0, 1)) {
+		wake_up(&target_dbs_info->sync_wq);
+		atomic_set(&target_dbs_info->being_woken, 0);
+	}
 
 	return NOTIFY_OK;
 }
@@ -1046,73 +1072,92 @@ static struct notifier_block dbs_migration_nb = {
 	.notifier_call = dbs_migration_notify,
 };
 
-void dbs_synchronize(struct work_struct *work)
+static int sync_pending(struct cpu_dbs_info_s *this_dbs_info)
 {
-	struct cpufreq_policy *policy;
-	struct cpu_dbs_info_s *this_dbs_info, *src_dbs_info;
-	struct dbs_sync_work_struct *dbs_work;
-	unsigned int cpu, src_cpu;
+	return atomic_read(&this_dbs_info->src_sync_cpu) >= 0;
+}
+
+static int dbs_sync_thread(void *data)
+{
+	int src_cpu, cpu = (int)data;
 	unsigned int src_freq, src_max_load;
+	struct cpu_dbs_info_s *this_dbs_info, *src_dbs_info;
+	struct cpufreq_policy *policy;
 	int delay;
 
-	dbs_work = container_of(work, struct dbs_sync_work_struct, work);
-	cpu = dbs_work->targ_cpu;
-	src_cpu = dbs_work->src_cpu;
-
-	get_online_cpus();
-
-	/* Getting source cpu info  */
-	src_dbs_info = &per_cpu(od_cpu_dbs_info, src_cpu);
-	if (src_dbs_info != NULL && src_dbs_info->cur_policy != NULL) {
-		src_freq = src_dbs_info->cur_policy->cur;
-		src_max_load = src_dbs_info->max_load;
-	} else {
-		src_freq = dbs_tuners_ins.sync_freq;
-		src_max_load = 0;
-	}
-
-	if (lock_policy_rwsem_write(cpu) < 0)
-		goto bail_acq_sema_failed;
-
 	this_dbs_info = &per_cpu(od_cpu_dbs_info, cpu);
-	policy = this_dbs_info->cur_policy;
-	if (!policy) {
-		/* CPU not using ondemand governor */
-		goto bail_incorrect_governor;
-	}
 
-	delay = usecs_to_jiffies(dbs_tuners_ins.sampling_rate);
+	while (1) {
+		wait_event(this_dbs_info->sync_wq,
+			   sync_pending(this_dbs_info) ||
+			   kthread_should_stop());
 
-	if (policy->cur < src_freq) {
+		if (kthread_should_stop())
+			break;
 
-		/* Cancelling the next ondemand sample */
-		cancel_delayed_work_sync(&this_dbs_info->work);
+		get_online_cpus();
 
-		/*
-		 * Arch specific cpufreq driver may fail.
-		 * Don't update governor frequency upon failure.
-		 */
-		if (__cpufreq_driver_target(policy, src_freq,
-					CPUFREQ_RELATION_L) >= 0) {
-			policy->cur = src_freq;
-			if (src_max_load > this_dbs_info->max_load) {
-				this_dbs_info->max_load = src_max_load;
-				this_dbs_info->prev_load = src_max_load;
-			}
+		src_cpu = atomic_read(&this_dbs_info->src_sync_cpu);
+		src_dbs_info = &per_cpu(od_cpu_dbs_info, src_cpu);
+		if (src_dbs_info != NULL &&
+		    src_dbs_info->cur_policy != NULL) {
+			src_freq = src_dbs_info->cur_policy->cur;
+			src_max_load = src_dbs_info->max_load;
+		} else {
+			src_freq = dbs_tuners_ins.sync_freq;
+			src_max_load = 0;
 		}
 
-		/* Rescheduling the next ondemand sample */
-		mutex_lock(&this_dbs_info->timer_mutex);
-		schedule_delayed_work_on(cpu, &this_dbs_info->work,
-					delay);
-		mutex_unlock(&this_dbs_info->timer_mutex);
-	}
-bail_incorrect_governor:
-	unlock_policy_rwsem_write(cpu);
+		if (lock_policy_rwsem_write(cpu) < 0)
+			goto bail_acq_sema_failed;
 
+		if (!atomic_read(&this_dbs_info->sync_enabled)) {
+			atomic_set(&this_dbs_info->src_sync_cpu, -1);
+			put_online_cpus();
+			unlock_policy_rwsem_write(cpu);
+			continue;
+		}
+
+		policy = this_dbs_info->cur_policy;
+		if (!policy) {
+			/* CPU not using ondemand governor */
+			goto bail_incorrect_governor;
+		}
+		delay = usecs_to_jiffies(dbs_tuners_ins.sampling_rate);
+
+
+		if (policy->cur < src_freq) {
+			/* cancel the next ondemand sample */
+			cancel_delayed_work_sync(&this_dbs_info->work);
+
+			/*
+			 * Arch specific cpufreq driver may fail.
+			 * Don't update governor frequency upon failure.
+			 */
+			if (__cpufreq_driver_target(policy, src_freq,
+						    CPUFREQ_RELATION_L) >= 0) {
+				policy->cur = src_freq;
+				if (src_max_load > this_dbs_info->max_load) {
+					this_dbs_info->max_load = src_max_load;
+					this_dbs_info->prev_load = src_max_load;
+				}
+			}
+
+			/* reschedule the next ondemand sample */
+			mutex_lock(&this_dbs_info->timer_mutex);
+			queue_delayed_work_on(cpu, dbs_wq,
+					      &this_dbs_info->work, delay);
+			mutex_unlock(&this_dbs_info->timer_mutex);
+		}
+
+bail_incorrect_governor:
+		unlock_policy_rwsem_write(cpu);
 bail_acq_sema_failed:
-	put_online_cpus();
-	return;
+		put_online_cpus();
+		atomic_set(&this_dbs_info->src_sync_cpu, -1);
+	}
+
+	return 0;
 }
 
 static void dbs_input_event(struct input_handle *handle, unsigned int type,
@@ -1168,7 +1213,28 @@ static void dbs_input_disconnect(struct input_handle *handle)
 }
 
 static const struct input_device_id dbs_ids[] = {
-	{ .driver_info = 1 },
+	/* multi-touch touchscreen */
+	{
+		.flags = INPUT_DEVICE_ID_MATCH_EVBIT |
+			INPUT_DEVICE_ID_MATCH_ABSBIT,
+		.evbit = { BIT_MASK(EV_ABS) },
+		.absbit = { [BIT_WORD(ABS_MT_POSITION_X)] =
+			BIT_MASK(ABS_MT_POSITION_X) |
+			BIT_MASK(ABS_MT_POSITION_Y) },
+	},
+	/* touchpad */
+	{
+		.flags = INPUT_DEVICE_ID_MATCH_KEYBIT |
+			INPUT_DEVICE_ID_MATCH_ABSBIT,
+		.keybit = { [BIT_WORD(BTN_TOUCH)] = BIT_MASK(BTN_TOUCH) },
+		.absbit = { [BIT_WORD(ABS_X)] =
+			BIT_MASK(ABS_X) | BIT_MASK(ABS_Y) },
+	},
+	/* Keypad */
+	{
+		.flags = INPUT_DEVICE_ID_MATCH_EVBIT,
+		.evbit = { BIT_MASK(EV_KEY) },
+	},
 	{ },
 };
 
@@ -1204,10 +1270,14 @@ static int cpufreq_governor_dbs(struct cpufreq_policy *policy,
 			j_dbs_info->cur_policy = policy;
 
 			j_dbs_info->prev_cpu_idle = get_cpu_idle_time(j,
-						&j_dbs_info->prev_cpu_wall);
+						&j_dbs_info->prev_cpu_wall, dbs_tuners_ins.io_is_busy);
 			if (dbs_tuners_ins.ignore_nice)
 				j_dbs_info->prev_cpu_nice =
 						kcpustat_cpu(j).cpustat[CPUTIME_NICE];
+			set_cpus_allowed(j_dbs_info->sync_thread,
+					 *cpumask_of(j));
+			if (!dbs_tuners_ins.powersave_bias)
+				atomic_set(&j_dbs_info->sync_enabled, 1);
 		}
 		this_dbs_info->cpu = cpu;
 		this_dbs_info->rate_mult = 1;
@@ -1264,6 +1334,13 @@ static int cpufreq_governor_dbs(struct cpufreq_policy *policy,
 
 		mutex_lock(&dbs_mutex);
 		dbs_enable--;
+
+		for_each_cpu(j, policy->cpus) {
+			struct cpu_dbs_info_s *j_dbs_info;
+			j_dbs_info = &per_cpu(od_cpu_dbs_info, j);
+			atomic_set(&j_dbs_info->sync_enabled, 0);
+		}
+
 		/* If device is being removed, policy is no longer
 		 * valid. */
 		this_dbs_info->cur_policy = NULL;
@@ -1335,17 +1412,18 @@ static int __init cpufreq_gov_dbs_init(void)
 			&per_cpu(od_cpu_dbs_info, i);
 		struct dbs_work_struct *dbs_work =
 			&per_cpu(dbs_refresh_work, i);
-		struct dbs_sync_work_struct *dbs_sync =
-			&per_cpu(dbs_sync_work, i);
 
 		mutex_init(&this_dbs_info->timer_mutex);
 		INIT_WORK(&dbs_work->work, dbs_refresh_callback);
 		dbs_work->cpu = i;
 
-		INIT_WORK(&dbs_sync->work, dbs_synchronize);
-		dbs_sync->src_cpu = 0;
-		dbs_sync->targ_cpu = i;
+		atomic_set(&this_dbs_info->src_sync_cpu, -1);
+		atomic_set(&this_dbs_info->being_woken, 0);
+		init_waitqueue_head(&this_dbs_info->sync_wq);
 
+		this_dbs_info->sync_thread = kthread_run(dbs_sync_thread,
+							 (void *)i,
+							 "dbs_sync/%d", i);
 	}
 
 	return cpufreq_register_governor(&cpufreq_gov_ondemand);
@@ -1360,6 +1438,7 @@ static void __exit cpufreq_gov_dbs_exit(void)
 		struct cpu_dbs_info_s *this_dbs_info =
 			&per_cpu(od_cpu_dbs_info, i);
 		mutex_destroy(&this_dbs_info->timer_mutex);
+		kthread_stop(this_dbs_info->sync_thread);
 	}
 	destroy_workqueue(dbs_wq);
 }
