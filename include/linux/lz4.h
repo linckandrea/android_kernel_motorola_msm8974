@@ -9,11 +9,6 @@
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
-<<<<<<< HEAD
-#define LZ4_MEM_COMPRESS	(4096 * sizeof(unsigned char *))
-#define LZ4HC_MEM_COMPRESS	(65538 * sizeof(unsigned char *))
-=======
->>>>>>> 09d0757... decompressor: add LZ4 decompressor module
 
 /*
  * lz4_compressbound()
@@ -26,43 +21,6 @@ static inline size_t lz4_compressbound(size_t isize)
 }
 
 /*
-<<<<<<< HEAD
- * lz4_compress()
- *	src     : source address of the original data
- *	src_len : size of the original data
- *	dst	: output buffer address of the compressed data
- *		This requires 'dst' of size LZ4_COMPRESSBOUND.
- *	dst_len : is the output size, which is returned after compress done
- *	workmem : address of the working memory.
- *		This requires 'workmem' of size LZ4_MEM_COMPRESS.
- *	return  : Success if return 0
- *		  Error if return (< 0)
- *	note :  Destination buffer and workmem must be already allocated with
- *		the defined size.
- */
-int lz4_compress(const unsigned char *src, size_t src_len,
-		unsigned char *dst, size_t *dst_len, void *wrkmem);
-
- /*
-  * lz4hc_compress()
-  *	 src	 : source address of the original data
-  *	 src_len : size of the original data
-  *	 dst	 : output buffer address of the compressed data
-  *		This requires 'dst' of size LZ4_COMPRESSBOUND.
-  *	 dst_len : is the output size, which is returned after compress done
-  *	 workmem : address of the working memory.
-  *		This requires 'workmem' of size LZ4HC_MEM_COMPRESS.
-  *	 return  : Success if return 0
-  *		   Error if return (< 0)
-  *	 note :  Destination buffer and workmem must be already allocated with
-  *		 the defined size.
-  */
-int lz4hc_compress(const unsigned char *src, size_t src_len,
-		unsigned char *dst, size_t *dst_len, void *wrkmem);
-
-/*
-=======
->>>>>>> 09d0757... decompressor: add LZ4 decompressor module
  * lz4_decompress()
  *	src     : source address of the compressed data
  *	src_len : is the input size, whcih is returned after decompress done
@@ -73,13 +31,8 @@ int lz4hc_compress(const unsigned char *src, size_t src_len,
  *	note :  Destination buffer must be already allocated.
  *		slightly faster than lz4_decompress_unknownoutputsize()
  */
-<<<<<<< HEAD
-int lz4_decompress(const unsigned char *src, size_t *src_len,
-		unsigned char *dest, size_t actual_dest_len);
-=======
 int lz4_decompress(const char *src, size_t *src_len, char *dest,
 		size_t actual_dest_len);
->>>>>>> 09d0757... decompressor: add LZ4 decompressor module
 
 /*
  * lz4_decompress_unknownoutputsize()
@@ -93,11 +46,6 @@ int lz4_decompress(const char *src, size_t *src_len, char *dest,
  *		  Error if return (< 0)
  *	note :  Destination buffer must be already allocated.
  */
-<<<<<<< HEAD
-int lz4_decompress_unknownoutputsize(const unsigned char *src, size_t src_len,
-		unsigned char *dest, size_t *dest_len);
-=======
 int lz4_decompress_unknownoutputsize(const char *src, size_t src_len,
 		char *dest, size_t *dest_len);
->>>>>>> 09d0757... decompressor: add LZ4 decompressor module
 #endif
