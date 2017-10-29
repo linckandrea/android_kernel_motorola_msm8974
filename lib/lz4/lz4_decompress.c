@@ -1,7 +1,11 @@
 /*
  * LZ4 Decompressor for Linux kernel
  *
+<<<<<<< HEAD
+ * Copyright (C) 2013, LG Electronics, Kyungsik Lee <kyungsik.lee@lge.com>
+=======
  * Copyright (C) 2013 LG Electronics Co., Ltd. (http://www.lge.com/)
+>>>>>>> 09d0757... decompressor: add LZ4 decompressor module
  *
  * Based on LZ4 implementation by Yann Collet.
  *
@@ -72,6 +76,11 @@ static int lz4_uncompress(const char *source, char *dest, int osize)
 			len = *ip++;
 			for (; len == 255; length += 255)
 				len = *ip++;
+<<<<<<< HEAD
+			if (unlikely(length > (size_t)(length + len)))
+				goto _output_error;
+=======
+>>>>>>> 09d0757... decompressor: add LZ4 decompressor module
 			length += len;
 		}
 
@@ -106,6 +115,11 @@ static int lz4_uncompress(const char *source, char *dest, int osize)
 		if (length == ML_MASK) {
 			for (; *ip == 255; length += 255)
 				ip++;
+<<<<<<< HEAD
+			if (unlikely(length > (size_t)(length + *ip)))
+				goto _output_error;
+=======
+>>>>>>> 09d0757... decompressor: add LZ4 decompressor module
 			length += *ip++;
 		}
 
@@ -155,7 +169,11 @@ static int lz4_uncompress(const char *source, char *dest, int osize)
 
 	/* write overflow error detected */
 _output_error:
+<<<<<<< HEAD
+	return -1;
+=======
 	return (int) (-(((char *)ip) - source));
+>>>>>>> 09d0757... decompressor: add LZ4 decompressor module
 }
 
 static int lz4_uncompress_unknownoutputsize(const char *source, char *dest,
@@ -188,6 +206,11 @@ static int lz4_uncompress_unknownoutputsize(const char *source, char *dest,
 			int s = 255;
 			while ((ip < iend) && (s == 255)) {
 				s = *ip++;
+<<<<<<< HEAD
+				if (unlikely(length > (size_t)(length + s)))
+					goto _output_error;
+=======
+>>>>>>> 09d0757... decompressor: add LZ4 decompressor module
 				length += s;
 			}
 		}
@@ -228,6 +251,11 @@ static int lz4_uncompress_unknownoutputsize(const char *source, char *dest,
 		if (length == ML_MASK) {
 			while (ip < iend) {
 				int s = *ip++;
+<<<<<<< HEAD
+				if (unlikely(length > (size_t)(length + s)))
+					goto _output_error;
+=======
+>>>>>>> 09d0757... decompressor: add LZ4 decompressor module
 				length += s;
 				if (s == 255)
 					continue;
@@ -280,11 +308,19 @@ static int lz4_uncompress_unknownoutputsize(const char *source, char *dest,
 
 	/* write overflow error detected */
 _output_error:
+<<<<<<< HEAD
+	return -1;
+}
+
+int lz4_decompress(const unsigned char *src, size_t *src_len,
+		unsigned char *dest, size_t actual_dest_len)
+=======
 	return (int) (-(((char *) ip) - source));
 }
 
 int lz4_decompress(const char *src, size_t *src_len, char *dest,
 		size_t actual_dest_len)
+>>>>>>> 09d0757... decompressor: add LZ4 decompressor module
 {
 	int ret = -1;
 	int input_len = 0;
@@ -299,11 +335,19 @@ exit_0:
 	return ret;
 }
 #ifndef STATIC
+<<<<<<< HEAD
+EXPORT_SYMBOL(lz4_decompress);
+#endif
+
+int lz4_decompress_unknownoutputsize(const unsigned char *src, size_t src_len,
+		unsigned char *dest, size_t *dest_len)
+=======
 EXPORT_SYMBOL_GPL(lz4_decompress);
 #endif
 
 int lz4_decompress_unknownoutputsize(const char *src, size_t src_len,
 		char *dest, size_t *dest_len)
+>>>>>>> 09d0757... decompressor: add LZ4 decompressor module
 {
 	int ret = -1;
 	int out_len = 0;
@@ -319,8 +363,14 @@ exit_0:
 	return ret;
 }
 #ifndef STATIC
+<<<<<<< HEAD
+EXPORT_SYMBOL(lz4_decompress_unknownoutputsize);
+
+MODULE_LICENSE("Dual BSD/GPL");
+=======
 EXPORT_SYMBOL_GPL(lz4_decompress_unknownoutputsize);
 
 MODULE_LICENSE("GPL");
+>>>>>>> 09d0757... decompressor: add LZ4 decompressor module
 MODULE_DESCRIPTION("LZ4 Decompressor");
 #endif
