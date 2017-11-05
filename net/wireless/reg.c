@@ -878,6 +878,7 @@ static void handle_channel(struct wiphy *wiphy,
 			chan->center_freq);
 			chan->flags |= IEEE80211_CHAN_DISABLED;
 		}
+
 		return;
 	}
 
