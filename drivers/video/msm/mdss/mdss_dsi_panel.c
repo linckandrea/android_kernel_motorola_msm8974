@@ -896,7 +896,7 @@ end:
 	} else
 		dropbox_count = 0;
 
-	pr_info("%s-. Pwr_mode(0x0A) = 0x%x\n", __func__, pwr_mode);
+	pr_debug("%s-. Pwr_mode(0x0A) = 0x%x\n", __func__, pwr_mode);
 
 	return 0;
 }
