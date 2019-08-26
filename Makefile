@@ -373,7 +373,11 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -fno-strict-aliasing -fno-common \
 		   -Werror-implicit-function-declaration \
 		   -Wno-format-security -Wno-sizeof-pointer-memaccess \
-		   -fno-delete-null-pointer-checks
+		   -fno-delete-null-pointer-checks \
+                   -mcpu=cortex-a15 -mtune=cortex-a15 -mfpu=neon-vfpv4 \
+                   -g0 -DNDEBUG \
+                   -std=gnu89
+
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=
 KBUILD_AFLAGS   := -D__ASSEMBLY__
