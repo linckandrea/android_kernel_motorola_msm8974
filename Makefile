@@ -567,7 +567,8 @@ endif # $(dot-config)
 # Defaults to vmlinux, but the arch makefile usually adds further targets
 all: vmlinux
 
-KBUILD_CFLAGS	+= $(call cc-disable-warning,maybe-uninitialized,)
+# Disable unused-constant-variable warnings
+KBUILD_CFLAGS	+= $(call cc-disable-warning,unused-const-variable,)
 
 ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
 KBUILD_CFLAGS	+= -Os
