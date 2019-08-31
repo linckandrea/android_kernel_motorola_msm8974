@@ -149,7 +149,7 @@ void start_bandwidth_timer(struct hrtimer *period_timer, ktime_t period)
 
 DEFINE_MUTEX(sched_domains_mutex);
 DEFINE_PER_CPU_SHARED_ALIGNED(struct rq, runqueues);
-#if defined(CONFIG_MSM_RUN_QUEUE_STATS_BE_CONSERVATIVE)
+#ifdef (CONFIG_MSM_RUN_QUEUE_STATS_BE_CONSERVATIVE)
 DEFINE_PER_CPU_SHARED_ALIGNED(struct nr_stats_s, runqueue_stats);
 #endif
 
@@ -2226,7 +2226,7 @@ unsigned long nr_iowait(void)
 	return sum;
 }
 
-#if defined(CONFIG_MSM_RUN_QUEUE_STATS_BE_CONSERVATIVE)
+#ifdef (CONFIG_MSM_RUN_QUEUE_STATS_BE_CONSERVATIVE)
 unsigned long avg_nr_running(void)
 {
 	unsigned long i, sum = 0;
