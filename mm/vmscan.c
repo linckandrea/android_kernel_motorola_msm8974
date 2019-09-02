@@ -43,6 +43,7 @@
 #include <linux/sysctl.h>
 #include <linux/oom.h>
 #include <linux/prefetch.h>
+#include <linux/simple_lmk.h>
 
 #include <asm/tlbflush.h>
 #include <asm/div64.h>
@@ -2491,6 +2492,7 @@ loop_again:
 	total_scanned = 0;
 	sc.priority = DEF_PRIORITY;
 	sc.nr_reclaimed = 0;
+	simple_lmk_decide_reclaim(sc.priority)
 	sc.may_writepage = !laptop_mode;
 	count_vm_event(PAGEOUTRUN);
 
