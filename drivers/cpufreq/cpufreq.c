@@ -1256,7 +1256,7 @@ static int __cpufreq_remove_dev(struct device *dev, struct subsys_interface *sif
 
 	if (cpufreq_driver->target)
 		__cpufreq_governor(data, CPUFREQ_GOV_STOP);
-		__cpufreq_governor(data, CPUFREQ_GOV_POLICY_EXIT);
+	__cpufreq_governor(data, CPUFREQ_GOV_POLICY_EXIT);
 
 	kobj = &data->kobj;
 	cmp = &data->kobj_unregister;
