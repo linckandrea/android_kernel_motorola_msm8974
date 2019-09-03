@@ -1,4 +1,4 @@
- *  linux/include/linux/cpufreq.h
+/*  linux/include/linux/cpufreq.h
  *
  *  Copyright (C) 2001 Russell King
  *            (C) 2002 - 2003 Dominik Brodowski <linux@brodo.de>
