@@ -578,6 +578,10 @@ static int __init cpu_ib_init(void)
 
 	spin_lock_init(&b->lock);
 
+	b->ib.freq[0] = 1267200;
+	b->ib.freq[1] = 1267200;
+	b->ib.duration_ms = 50;
+
 	INIT_WORK(&b->fb.boost_work, fb_boost_main);
 	INIT_DELAYED_WORK(&b->fb.unboost_work, fb_unboost_main);
 	INIT_WORK(&b->ib.boost_work, ib_boost_main);
