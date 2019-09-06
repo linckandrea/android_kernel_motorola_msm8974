@@ -145,7 +145,7 @@ static int suspend_test(int level)
 {
 #ifdef CONFIG_PM_DEBUG
 	if (pm_test_level == level) {
-		printk(KERN_INFO "suspend debug: Waiting for 5 seconds.\n");
+		pr_debug("suspend debug: Waiting for 5 seconds.\n");
 		mdelay(5000);
 		return 1;
 	}
@@ -216,7 +216,7 @@ static int suspend_enter(suspend_state_t state, bool *wakeup)
 
 	error = dpm_suspend_end(PMSG_SUSPEND);
 	if (error) {
-		printk(KERN_ERR "PM: Some devices failed to power down\n");
+		pr_err_ratelimited("PM: Some devices failed to power down\n");
 		goto Platform_finish;
 	}
 
@@ -288,7 +288,7 @@ int suspend_devices_and_enter(suspend_state_t state)
 	suspend_test_start();
 	error = dpm_suspend_start(PMSG_SUSPEND);
 	if (error) {
-		printk(KERN_ERR "PM: Some devices failed to suspend\n");
+		pr_err_ratelimited("PM: Some devices failed to suspend\n");
 		goto Recover_platform;
 	}
 	suspend_test_finish("suspend devices");
@@ -350,9 +350,9 @@ static int enter_state(suspend_state_t state)
 		return -EBUSY;
 
 	if (suspendsync) {
-		printk(KERN_INFO "PM: Syncing filesystems ... ");
+		pr_info("PM: Syncing filesystems ... ");
 		sys_sync();
-		printk("done.\n");
+		pr_info("done.\n");
 	}
 
 	pr_debug("PM: Preparing system for %s sleep\n", pm_states[state]);
