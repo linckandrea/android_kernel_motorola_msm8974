@@ -1603,7 +1603,7 @@
 	qcom,chipid = <0x03030002>;
 	qcom,msm-bus,num-cases = <15>;
 	qcom,bus-control;
-	qcom,initial-pwrlevel = <6>;
+	qcom,initial-pwrlevel = <5>;
 
 	/* Updated bus bandwidth requirements */
 	qcom,msm-bus,vectors-KBps =
