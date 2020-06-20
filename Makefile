@@ -635,7 +635,7 @@ KBUILD_CFLAGS   += $(call cc-option, -mcpu=cortex-a15,) \
 		   $(call cc-option, -g0,) \
 		   $(call cc-option, -DNDEBUG,) \
 		   $(call cc-option, -pipe,)		   
-	   
+
 ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
 KBUILD_CFLAGS	+= -Os
 else
