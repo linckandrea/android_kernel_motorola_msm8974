@@ -19,7 +19,7 @@
 #include <linux/input.h>
 #include <linux/slab.h>
 
-#define FB_BOOST_MS 1100
+#define FB_BOOST_MS 3000
 
 enum boost_status {
 	UNBOOST,
@@ -58,6 +58,7 @@ struct boost_policy {
 	struct ib_config ib;
 	struct workqueue_struct *wq;
 	uint8_t enabled;
+	bool device_awake;
 };
 
 static struct boost_policy *boost_policy_g;
@@ -79,12 +80,11 @@ static void ib_boost_main(struct work_struct *work)
 	b->ib.nr_cpus_boosted = 0;
 
 	/*
-	 * Maximum of two CPUs can be boosted at any given time.
-	 * Boost two CPUs if only one is online as it's very likely
-	 * that another CPU will come online soon (due to user interaction).
-	 * The next CPU to come online is the other CPU that will be boosted.
+	 * Maximum of two CPUs can be boosted at any given time. Boost two
+	 * CPUs if not all CPUs are online. If only one CPU is online, then
+	 * the next CPU to come online is the 2nd CPU that will be boosted.
 	 */
-	b->ib.nr_cpus_to_boost = num_online_cpus() == 1 ? 2 : 1;
+	b->ib.nr_cpus_to_boost = num_online_cpus() == NR_CPUS ? 1 : 2;
 
 	/*
 	 * Reduce the boost duration for all CPUs by a factor of
@@ -215,8 +215,16 @@ static int fb_unblank_boost(struct notifier_block *nb,
 	int *blank = evdata->data;
 
 	/* Only boost for unblank (i.e. when device is woken) */
-	if (val != FB_EVENT_BLANK || *blank != FB_BLANK_UNBLANK)
+	if (val != FB_EVENT_BLANK)
 		return NOTIFY_OK;
+
+	/* Keep track of suspend state */
+	if (*blank == FB_BLANK_UNBLANK) {
+		b->device_awake = 1;
+	} else {
+		b->device_awake = 0;
+		return NOTIFY_OK;
+	}
 
 	if (!is_driver_enabled(b))
 		return NOTIFY_OK;
@@ -241,6 +249,12 @@ static void cpu_ib_input_event(struct input_handle *handle, unsigned int type,
 	struct boost_policy *b = handle->handler->private;
 	enum boost_status ib_status;
 	bool do_boost;
+
+	/* Anticipate device wake-up and boost early */
+	if (!b->device_awake) {
+		queue_work(b->wq, &b->fb.boost_work);
+		return;
+	}
 
 	spin_lock(&b->lock);
 	ib_status = b->ib.running;
@@ -318,6 +332,11 @@ static const struct input_device_id cpu_ib_ids[] = {
 		.absbit = { [BIT_WORD(ABS_X)] =
 			BIT_MASK(ABS_X) | BIT_MASK(ABS_Y) },
 	},
+	/* Keypad */
+	{
+		.flags = INPUT_DEVICE_ID_MATCH_EVBIT,
+		.evbit = { BIT_MASK(EV_KEY) },
+	},
 	{ },
 };
 
@@ -394,6 +413,18 @@ static void unboost_all_cpus(struct boost_policy *b)
 	put_online_cpus();
 
 	set_ib_status(b, UNBOOST);
+}
+
+bool check_cpuboost(int cpu)
+{
+	struct ib_pcpu *pcpu;
+	struct boost_policy *b = boost_policy_g;
+	pcpu = per_cpu_ptr(b->ib.boost_info, cpu);
+
+	if (pcpu->state == UNBOOST)
+		return false;
+
+	return true;
 }
 
 static void unboost_cpu(struct ib_pcpu *pcpu)
