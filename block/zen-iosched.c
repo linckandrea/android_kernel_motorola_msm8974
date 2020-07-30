@@ -3,7 +3,8 @@
  * Primarily based on Noop, deadline, and SIO IO schedulers.
  *
  * Copyright (C) 2012 Brandon Berhent <bbedward@gmail.com>
- *
+ *           (C) 2014 LoungeKatt <twistedumbrella@gmail.com>
+ *				 2015 Fixes to stop crashing on 3.10 by Matthew Alex <matthewalex@outlook.com>
  * FCFS, dispatches are back-inserted, deadlines ensure fairness.
  * Should work best with devices where there is no travel delay.
  */
@@ -163,6 +164,7 @@ static void *zen_init_queue(struct request_queue *q)
 	zdata = kmalloc_node(sizeof(*zdata), GFP_KERNEL, q->node);
 	if (!zdata)
 		return NULL;
+	
 	INIT_LIST_HEAD(&zdata->fifo_list[SYNC]);
 	INIT_LIST_HEAD(&zdata->fifo_list[ASYNC]);
 	zdata->fifo_expire[SYNC] = sync_expire;
