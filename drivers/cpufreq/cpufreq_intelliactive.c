@@ -31,6 +31,7 @@
 #include <linux/kthread.h>
 #include <linux/slab.h>
 #include <linux/kernel_stat.h>
+#include <linux/display_state.h>
 #include <asm/cputime.h>
 #include <linux/input.h>
 
@@ -392,7 +393,7 @@ static void cpufreq_interactive_timer(unsigned long data)
 
 	do_div(cputime_speedadj, delta_time);
 	loadadjfreq = (unsigned int)cputime_speedadj * 100;
-	cpu_load = loadadjfreq / pcpu->target_freq;
+	cpu_load = loadadjfreq / pcpu->policy->cur;
 	pcpu->prev_load = cpu_load;
 	boosted = boost_val || now < boostpulse_endtime;
 
@@ -403,7 +404,9 @@ static void cpufreq_interactive_timer(unsigned long data)
 		}
 	}
 
-	if (cpu_load >= go_hispeed_load || boosted) {
+	cpufreq_notify_utilization(pcpu->policy, cpu_load);
+    
+	if (cpu_load >= go_hispeed_load || boosted && is_display_on()) {
 		if (pcpu->target_freq < hispeed_freq) {
 			nr_cpus = num_online_cpus();
 
