@@ -1691,16 +1691,7 @@
                        qcom,gpu-freq = <27000000>;
                        qcom,bus-freq = <0>;
                        qcom,io-fraction = <101>;
-               };
-               
-			   /* this dummy power level 7 is implemented to make
-				  the system use power level 6; it is never actively used */
-               qcom,gpu-pwrlevel@7 {
-                       reg = <7>;
-                       qcom,gpu-freq = <27000000>;
-                       qcom,bus-freq = <0>;
-                       qcom,io-fraction = <101>;
-               };               
+               };            
        };
 };
 
