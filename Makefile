@@ -598,7 +598,8 @@ KBUILD_CFLAGS   += $(call cc-disable-warning,format-truncation,)
 KBUILD_CFLAGS   += $(call cc-option, -mcpu=cortex-a15,) \
 		   $(call cc-option, -mtune=cortex-a15,) \
 		   $(call cc-option, -mfpu=neon-vfpv4,) \
-		   $(call cc-option, -g0,) 
+		   $(call cc-option, -g0,) \
+		   $(call cc-option, -DNDEBUG,)		   
 		   
 ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
 KBUILD_CFLAGS	+= -Os
