@@ -385,11 +385,6 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -Wno-format-security -Wno-sizeof-pointer-memaccess \
 		   -fno-delete-null-pointer-checks \
 		   -std=gnu89
-		   
-KBUILD_CFLAGS	+=	--param inline-min-speedup=15 \
-			--param max-inline-insns-single=200 \
-			--param max-inline-insns-auto=30 \
-			--param early-inlining-insns=14
 			
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=
@@ -598,6 +593,10 @@ KBUILD_CFLAGS   += $(call cc-disable-warning,format-truncation,)
 KBUILD_CFLAGS   += $(call cc-option, -mcpu=cortex-a15,) \
 		   $(call cc-option, -mtune=cortex-a15,) \
 		   $(call cc-option, -mfpu=neon-vfpv4,) \
+		   $(call cc-option, -mvectorize-with-neon-quad,) \
+		   $(call cc-option, -fivopts,) \
+		   $(call cc-option, -ftree-parallelize-loops=4,) \		   
+		   $(call cc-option, -fpredictive-commoning,) \
 		   $(call cc-option, -g0,) \
 		   $(call cc-option, -DNDEBUG,)		   
 		   
