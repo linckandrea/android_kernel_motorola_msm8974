@@ -412,7 +412,9 @@ obj-$(CONFIG_MSM_ENABLE_WDOG_DEBUG_CONTROL) += wdog_debug.o
 
 obj-$(CONFIG_MSM_USE_USER_ACCESSIBLE_TIMERS) += timer_page.o
 
+ifdef CONFIG_MSM_SLEEPER
 obj-$(CONFIG_MSM_SLEEPER) += msm-sleeper.o
+endif
 
 ifdef CONFIG_MSM_CPR
 obj-$(CONFIG_DEBUG_FS) += msm_cpr-debug.o
