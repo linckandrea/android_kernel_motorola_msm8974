@@ -250,8 +250,8 @@ CONFIG_SHELL := $(shell if [ -x "$$BASH" ]; then echo $$BASH; \
 
 HOSTCC       = gcc
 HOSTCXX      = g++
-HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -O2 -fomit-frame-pointer -pipe -g0 -DNDEBUG -std=gnu89
-HOSTCXXFLAGS = -O2 -pipe -g0 -DNDEBUG
+HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -O2 -fomit-frame-pointer 
+HOSTCXXFLAGS = -O2
 
 # Decide whether to build built-in, modular, or both.
 # Normally, just do built-in.
@@ -384,7 +384,6 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -Werror-implicit-function-declaration \
 		   -Wno-format-security -Wno-sizeof-pointer-memaccess \
 		   -fno-delete-null-pointer-checks \
-		   -std=gnu89
 			
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=
@@ -589,15 +588,6 @@ KBUILD_CFLAGS   += $(call cc-disable-warning,format-truncation,)
 ####################
 # Optimization flags
 ####################
-KBUILD_CFLAGS   += $(call cc-option, -mcpu=cortex-a15,) \
-		   $(call cc-option, -mtune=cortex-a15,) \
-		   $(call cc-option, -mfpu=neon-vfpv4,) \
-		   $(call cc-option, -mvectorize-with-neon-quad,) \
-		   $(call cc-option, -fivopts,) \
-		   $(call cc-option, -fpredictive-commoning,) \
-		   $(call cc-option, -pipe,) \
-		   $(call cc-option, -g0,) \
-		   $(call cc-option, -DNDEBUG,)
 	   
 ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
 KBUILD_CFLAGS	+= -Os

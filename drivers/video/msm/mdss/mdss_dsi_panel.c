@@ -63,6 +63,8 @@
 
 DEFINE_LED_TRIGGER(bl_led_trigger);
 
+extern void lazyplug_enter_lazy(bool enter);
+
 bool display_on = true;
 
 bool is_display_on()
@@ -801,6 +803,7 @@ static int mdss_dsi_panel_on(struct mdss_panel_data *pdata)
 	}
 
 	display_on = true;
+    lazyplug_enter_lazy(false);
 
 	ctrl = container_of(pdata, struct mdss_dsi_ctrl_pdata,
 				panel_data);
@@ -957,6 +960,7 @@ disable_regs:
 
 
 	display_on = false;
+    lazyplug_enter_lazy(true);
 
 	return 0;
 }
