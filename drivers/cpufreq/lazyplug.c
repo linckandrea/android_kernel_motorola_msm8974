@@ -363,6 +363,7 @@ static void lazyplug_work_fn(struct work_struct *work)
 				lazy_suspend_handler();
 				last_state = suspended;
 			}
+			
 			if (persist_count > 0)
 				persist_count--;
 
@@ -404,7 +405,7 @@ static void lazyplug_work_fn(struct work_struct *work)
 #ifdef DEBUG_LAZYPLUG
 			pr_info("lazyplug is suspended!\n");
 #endif
-	}
+            
 			if (suspended != last_state) {
 				lazy_suspend_handler();
 				last_state = suspended;
