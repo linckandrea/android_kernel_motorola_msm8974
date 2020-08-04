@@ -250,8 +250,8 @@ CONFIG_SHELL := $(shell if [ -x "$$BASH" ]; then echo $$BASH; \
 
 HOSTCC       = gcc
 HOSTCXX      = g++
-HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -O2 -fomit-frame-pointer -g0 -DNDEBUG -std=gnu89
-HOSTCXXFLAGS = -O2 -g0 -DNDEBUG
+HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -O2 -fomit-frame-pointer -pipe -g0 -DNDEBUG -std=gnu89
+HOSTCXXFLAGS = -O2 -pipe -g0 -DNDEBUG
 
 # Decide whether to build built-in, modular, or both.
 # Normally, just do built-in.
@@ -596,7 +596,8 @@ KBUILD_CFLAGS   += $(call cc-option, -mcpu=cortex-a15,) \
 		   $(call cc-option, -fivopts,) \
 		   $(call cc-option, -fpredictive-commoning,) \
 		   $(call cc-option, -g0,) \
-		   $(call cc-option, -DNDEBUG,)
+		   $(call cc-option, -DNDEBUG,) \
+		   $(call cc-option, -pipe,)		   
 	   
 ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
 KBUILD_CFLAGS	+= -Os
