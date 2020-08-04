@@ -298,6 +298,14 @@ static void update_per_cpu_stat(void)
 	put_online_cpus();
 }
 
+static void cpu_all_up(struct work_struct *work);
+static DECLARE_WORK(cpu_all_up_work, cpu_all_up);
+
+static void cpu_all_up(struct work_struct *work)
+{
+	cpu_all_ctrl(true);
+}
+
 static void unplug_cpu(int min_active_cpu)
 {
 	unsigned int cpu;
@@ -319,24 +327,21 @@ static void unplug_cpu(int min_active_cpu)
 static void lazy_suspend_handler(void)
 {
 	if (last_state) {
-		if (lazyplug_active) {
-			pr_info("lazyplug: screen-on, turn on cores\n");
-			mutex_lock(&lazyplug_mutex);
-			/* keep cores awake long enough for faster wake up */
-			persist_count = BUSY_PERSISTENCE;
-			mutex_unlock(&lazyplug_mutex);
-		}
+		pr_info("lazyplug: screen-on, turn on cores\n");
+		mutex_lock(&lazyplug_mutex);
+		/* keep cores awake long enough for faster wake up */
+		persist_count = BUSY_PERSISTENCE;
+		mutex_unlock(&lazyplug_mutex);
+        schedule_work(&cpu_all_up_work);
 		queue_delayed_work(lazyplug_wq, &lazyplug_work,
 			msecs_to_jiffies(10));
 	} else {
-		if (lazyplug_active) {
-			pr_info("lazyplug: screen-off, turn off cores\n");
-			flush_workqueue(lazyplug_wq);
-			mutex_lock(&lazyplug_mutex);
-			mutex_unlock(&lazyplug_mutex);
-			// put rest of the cores to sleep unconditionally!
-			cpu_all_ctrl(false);
-		}
+		pr_info("lazyplug: screen-off, turn off cores\n");
+		flush_workqueue(lazyplug_wq);
+		mutex_lock(&lazyplug_mutex);
+		mutex_unlock(&lazyplug_mutex);
+		// put rest of the cores to sleep unconditionally!
+		cpu_all_ctrl(false);
 	}
 }
 
