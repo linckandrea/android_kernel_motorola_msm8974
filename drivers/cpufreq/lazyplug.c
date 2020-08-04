@@ -330,7 +330,6 @@ static void lazyplug_work_fn(struct work_struct *work)
 	unsigned int nr_cpus = 0;
 
 	if (lazyplug_active) {
-		lazy_suspend_handler();
 		nr_run_stat = calculate_thread_stats();
 		update_per_cpu_stat();
 #ifdef DEBUG_LAZYPLUG

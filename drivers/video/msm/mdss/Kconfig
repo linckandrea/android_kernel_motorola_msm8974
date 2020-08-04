@@ -54,3 +54,7 @@ config MDSS_QUICKDRAW
 	default n
 	---help---
 	  MDSS support for Framebuffer quickdraw
+	  
+config STATE_NOTIFIER
+        bool "State Notifier"
+        default y        
