@@ -37,6 +37,10 @@
 #include <linux/wake_gestures.h>
 #endif
 
+#ifdef CONFIG_STATE_NOTIFIER
+#include <linux/state_notifier.h>
+#endif
+
 enum {
 	STATE_UNKNOWN,
 	STATE_ACTIVE,
@@ -2553,7 +2557,10 @@ static void mxt_set_sensor_state(struct mxt_data *data, int state)
 		data->enable_reporting = false;
 		if (!data->in_bootloader)
 			mxt_sensor_state_config(data, SUSPEND_IDX);
-		break;
+#ifdef CONFIG_STATE_NOTIFIER
+		state_suspend();
+#endif
+        break;
 
 #ifdef CONFIG_WAKE_GESTURES
 	case STATE_WG:
@@ -2563,10 +2570,16 @@ static void mxt_set_sensor_state(struct mxt_data *data, int state)
 		mxt_set_t7_power_cfg(data, MXT_POWER_CFG_WG);
 		if (!data->in_bootloader)
 			mxt_sensor_state_config(data, ACTIVE_IDX);
-			break;
+#ifdef CONFIG_STATE_NOTIFIER
+		state_suspend();
+#endif
+		break;
 #endif
 
 	case STATE_ACTIVE:
+#ifdef CONFIG_STATE_NOTIFIER
+		state_resume();
+#endif
 		if (!data->in_bootloader)
 			mxt_sensor_state_config(data, ACTIVE_IDX);
 		data->enable_reporting = true;
