@@ -36,6 +36,7 @@
 #include <linux/hash.h>
 #include <linux/freezer.h>
 #include <linux/oom.h>
+#include <linux/display_state.h>
 
 #include <asm/tlbflush.h>
 #include "internal.h"
@@ -186,8 +187,14 @@ static unsigned long ksm_rmap_items;
 /* Number of pages ksmd should scan in one batch */
 static unsigned int ksm_thread_pages_to_scan = 256;
 
+/* Number of pages ksmd should scan in one batch during display off state*/
+static unsigned int ksm_thread_pages_to_scan_display_off = 128;
+
 /* Milliseconds ksmd should sleep between batches */
 static unsigned int ksm_thread_sleep_millisecs = 1500;
+
+/* Milliseconds ksmd should sleep between batches */
+static unsigned int ksm_thread_sleep_millisecs_display_off = 1500;
 
 /* Boolean to indicate whether to use deferred timer or not */
 static bool use_deferred_timer = true;
@@ -1500,24 +1507,40 @@ static int ksmd_should_run(void)
 
 static int ksm_scan_thread(void *nothing)
 {
+    bool display_state = is_display_on();
+    unsigned long ksm_thread_pages_to_scan_display_state = 0;
+    unsigned int ksm_thread_sleep_millisecs_display_state = 0;
+
+    pr_info("ksm: deciding what value should be used");
+    /* check if display is on and the decide what value should be used */    
+    if (display_state) {
+        ksm_thread_pages_to_scan_display_state = ksm_thread_pages_to_scan;
+        ksm_thread_sleep_millisecs_display_state = ksm_thread_sleep_millisecs;
+        pr_info("ksm: using display on value");
+    } else {
+        ksm_thread_pages_to_scan_display_state = ksm_thread_pages_to_scan_display_off;
+        ksm_thread_sleep_millisecs_display_state = ksm_thread_sleep_millisecs_display_off;
+        pr_info("ksm: using display off value");
+    }
+    
 	set_freezable();
 	set_user_nice(current, 5);
 
 	while (!kthread_should_stop()) {
 		mutex_lock(&ksm_thread_mutex);
 		if (ksmd_should_run())
-			ksm_do_scan(ksm_thread_pages_to_scan);
-		mutex_unlock(&ksm_thread_mutex);
+            ksm_do_scan(ksm_thread_pages_to_scan_display_state);
+        mutex_unlock(&ksm_thread_mutex);
 
 		try_to_freeze();
 
 		if (ksmd_should_run()) {
 			if (use_deferred_timer)
 				deferred_schedule_timeout(
-				msecs_to_jiffies(ksm_thread_sleep_millisecs));
+				msecs_to_jiffies(ksm_thread_sleep_millisecs_display_state));
 			else
 				schedule_timeout_interruptible(
-				msecs_to_jiffies(ksm_thread_sleep_millisecs));
+				msecs_to_jiffies(ksm_thread_sleep_millisecs_display_state));
 		} else {
 			wait_event_freezable(ksm_thread_wait,
 				ksmd_should_run() || kthread_should_stop());
@@ -1913,7 +1936,7 @@ static ssize_t sleep_millisecs_store(struct kobject *kobj,
 	unsigned long msecs;
 	int err;
 
-	err = strict_strtoul(buf, 10, &msecs);
+	err = kstrtoul(buf, 10, &msecs);
 	if (err || msecs > UINT_MAX)
 		return -EINVAL;
 
@@ -1922,6 +1945,29 @@ static ssize_t sleep_millisecs_store(struct kobject *kobj,
 	return count;
 }
 KSM_ATTR(sleep_millisecs);
+
+static ssize_t sleep_millisecs_display_off_show(struct kobject *kobj,
+				    struct kobj_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%u\n", ksm_thread_sleep_millisecs_display_off);
+}
+
+static ssize_t sleep_millisecs_display_off_store(struct kobject *kobj,
+				     struct kobj_attribute *attr,
+				     const char *buf, size_t count)
+{
+	unsigned long msecs;
+	int err;
+
+	err = kstrtoul(buf, 10, &msecs);
+	if (err || msecs > UINT_MAX)
+		return -EINVAL;
+
+	ksm_thread_sleep_millisecs_display_off = msecs;
+
+	return count;
+}
+KSM_ATTR(sleep_millisecs_display_off);
 
 static ssize_t pages_to_scan_show(struct kobject *kobj,
 				  struct kobj_attribute *attr, char *buf)
@@ -1936,7 +1982,7 @@ static ssize_t pages_to_scan_store(struct kobject *kobj,
 	int err;
 	unsigned long nr_pages;
 
-	err = strict_strtoul(buf, 10, &nr_pages);
+	err = kstrtoul(buf, 10, &nr_pages);
 	if (err || nr_pages > UINT_MAX)
 		return -EINVAL;
 
@@ -1945,6 +1991,29 @@ static ssize_t pages_to_scan_store(struct kobject *kobj,
 	return count;
 }
 KSM_ATTR(pages_to_scan);
+
+static ssize_t pages_to_scan_display_off_show(struct kobject *kobj,
+				  struct kobj_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%u\n", ksm_thread_pages_to_scan_display_off);
+}
+
+static ssize_t pages_to_scan_display_off_store(struct kobject *kobj,
+				   struct kobj_attribute *attr,
+				   const char *buf, size_t count)
+{
+	int err;
+	unsigned long nr_pages;
+
+	err = kstrtoul(buf, 10, &nr_pages);
+	if (err || nr_pages > UINT_MAX)
+		return -EINVAL;
+
+	ksm_thread_pages_to_scan_display_off = nr_pages;
+
+	return count;
+}
+KSM_ATTR(pages_to_scan_display_off);
 
 static ssize_t run_show(struct kobject *kobj, struct kobj_attribute *attr,
 			char *buf)
@@ -1958,7 +2027,7 @@ static ssize_t run_store(struct kobject *kobj, struct kobj_attribute *attr,
 	int err;
 	unsigned long flags;
 
-	err = strict_strtoul(buf, 10, &flags);
+	err = kstrtoul(buf, 10, &flags);
 	if (err || flags > UINT_MAX)
 		return -EINVAL;
 	if (flags > KSM_RUN_UNMERGE)
@@ -2063,7 +2132,9 @@ KSM_ATTR_RO(full_scans);
 
 static struct attribute *ksm_attrs[] = {
 	&sleep_millisecs_attr.attr,
+   	&sleep_millisecs_display_off_attr.attr,
 	&pages_to_scan_attr.attr,
+    &pages_to_scan_display_off_attr.attr,
 	&run_attr.attr,
 	&pages_shared_attr.attr,
 	&pages_sharing_attr.attr,
