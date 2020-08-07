@@ -37,6 +37,7 @@
 #include <linux/freezer.h>
 #include <linux/oom.h>
 #include <linux/display_state.h>
+#include <linux/module.h>
 
 #include <asm/tlbflush.h>
 #include "internal.h"
@@ -198,6 +199,10 @@ static unsigned int ksm_thread_sleep_millisecs_display_off = 1500;
 
 /* Boolean to indicate whether to use deferred timer or not */
 static bool use_deferred_timer = true;
+
+/* Value to indicate if ksm can run when display is off */
+static bool ksm_run_on_suspend = 1;
+module_param(ksm_run_on_suspend, bool, 0644);
 
 #define KSM_RUN_STOP	0
 #define KSM_RUN_MERGE	1
@@ -1502,7 +1507,24 @@ out:
 
 static int ksmd_should_run(void)
 {
-	return (ksm_run & KSM_RUN_MERGE) && !list_empty(&ksm_mm_head.mm_list);
+    switch (ksm_run_on_suspend) {
+        case 1:
+           return (ksm_run & KSM_RUN_MERGE) && !list_empty(&ksm_mm_head.mm_list);
+        break;
+        
+        case 0:
+            if (is_display_on()) {
+                return (ksm_run & KSM_RUN_MERGE) && !list_empty(&ksm_mm_head.mm_list);
+            } else {
+                pr_debug("ksm: disabled since display is off");
+                return 0;
+            }
+        break;
+            
+        default:
+            return (ksm_run & KSM_RUN_MERGE) && !list_empty(&ksm_mm_head.mm_list);
+        break;    
+    }
 }
 
 static int ksm_scan_thread(void *nothing)
@@ -1516,16 +1538,16 @@ static int ksm_scan_thread(void *nothing)
 	while (!kthread_should_stop()) {
 		mutex_lock(&ksm_thread_mutex);
         
-        pr_info("ksm: deciding what value should be used");
+        pr_debug("ksm: deciding what value should be used");
         /* check if display is on and the decide what value should be used */    
         if (is_display_on()) {
             ksm_thread_pages_to_scan_display_state = ksm_thread_pages_to_scan;
             ksm_thread_sleep_millisecs_display_state = ksm_thread_sleep_millisecs;
-            pr_info("ksm: using display on value");
+            pr_debug("ksm: using display on value");
         } else {
             ksm_thread_pages_to_scan_display_state = ksm_thread_pages_to_scan_display_off;
             ksm_thread_sleep_millisecs_display_state = ksm_thread_sleep_millisecs_display_off;
-            pr_info("ksm: using display off value");
+            pr_debug("ksm: using display off value");
         }
         
 		if (ksmd_should_run())
