@@ -1507,30 +1507,30 @@ static int ksmd_should_run(void)
 
 static int ksm_scan_thread(void *nothing)
 {
+    bool display_state = is_display_on();
     unsigned long ksm_thread_pages_to_scan_display_state = 0;
     unsigned int ksm_thread_sleep_millisecs_display_state = 0;
-  
+
+    pr_info("ksm: deciding what value should be used");
+    /* check if display is on and the decide what value should be used */    
+    if (display_state) {
+        ksm_thread_pages_to_scan_display_state = ksm_thread_pages_to_scan;
+        ksm_thread_sleep_millisecs_display_state = ksm_thread_sleep_millisecs;
+        pr_info("ksm: using display on value");
+    } else {
+        ksm_thread_pages_to_scan_display_state = ksm_thread_pages_to_scan_display_off;
+        ksm_thread_sleep_millisecs_display_state = ksm_thread_sleep_millisecs_display_off;
+        pr_info("ksm: using display off value");
+    }
+    
 	set_freezable();
 	set_user_nice(current, 5);
 
 	while (!kthread_should_stop()) {
 		mutex_lock(&ksm_thread_mutex);
-        
-        pr_info("ksm: deciding what value should be used");
-        /* check if display is on and the decide what value should be used */    
-        if (is_display_on()) {
-            ksm_thread_pages_to_scan_display_state = ksm_thread_pages_to_scan;
-            ksm_thread_sleep_millisecs_display_state = ksm_thread_sleep_millisecs;
-            pr_info("ksm: using display on value");
-        } else {
-            ksm_thread_pages_to_scan_display_state = ksm_thread_pages_to_scan_display_off;
-            ksm_thread_sleep_millisecs_display_state = ksm_thread_sleep_millisecs_display_off;
-            pr_info("ksm: using display off value");
-        }
-        
 		if (ksmd_should_run())
             ksm_do_scan(ksm_thread_pages_to_scan_display_state);
-            mutex_unlock(&ksm_thread_mutex);
+        mutex_unlock(&ksm_thread_mutex);
 
 		try_to_freeze();
 
