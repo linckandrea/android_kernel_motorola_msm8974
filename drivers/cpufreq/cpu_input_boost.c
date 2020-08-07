@@ -18,6 +18,7 @@
 #include <linux/fb.h>
 #include <linux/input.h>
 #include <linux/slab.h>
+#include <linux/fsync.h>
 
 #define FB_BOOST_MS 3000
 
@@ -147,6 +148,7 @@ static void fb_unboost_main(struct work_struct *work)
 
 	set_fb_state(b, UNBOOST);
 	unboost_all_cpus(b);
+    set_fsync(true);
 }
 
 static void ib_reboost_main(struct work_struct *work)
@@ -181,6 +183,7 @@ static int do_cpu_boost(struct notifier_block *nb,
 		return NOTIFY_OK;
 	}
 
+	set_fsync(false);
 	/* Boost previously-offline CPU */
 	if (b->ib.nr_cpus_boosted < b->ib.nr_cpus_to_boost &&
 		policy->cpu && !pcpu->state) {
@@ -351,7 +354,7 @@ static struct input_handler cpu_ib_input_handler = {
 static void boost_cpu0(struct boost_policy *b)
 {
 	struct ib_pcpu *pcpu = per_cpu_ptr(b->ib.boost_info, 0);
-
+    set_fsync(false);
 	pcpu->state = BOOST;
 	b->ib.nr_cpus_boosted++;
 	cpufreq_update_policy(0);
@@ -413,6 +416,8 @@ static void unboost_all_cpus(struct boost_policy *b)
 	put_online_cpus();
 
 	set_ib_status(b, UNBOOST);
+    
+    set_fsync(true);
 }
 
 bool check_cpuboost(int cpu)
@@ -434,6 +439,7 @@ static void unboost_cpu(struct ib_pcpu *pcpu)
 	if (cpu_online(pcpu->cpu))
 		cpufreq_update_policy(pcpu->cpu);
 	put_online_cpus();
+    set_fsync(true);
 }
 
 static ssize_t enabled_write(struct device *dev,
