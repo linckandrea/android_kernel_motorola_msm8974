@@ -14,7 +14,7 @@
 #include <linux/state_notifier.h>
 #include <linux/delay.h>
 
-#define DEFAULT_SUSPEND_DEFER_TIME 	5
+#define DEFAULT_SUSPEND_DEFER_TIME 	1
 #define STATE_NOTIFIER			"state_notifier"
 
 /*
