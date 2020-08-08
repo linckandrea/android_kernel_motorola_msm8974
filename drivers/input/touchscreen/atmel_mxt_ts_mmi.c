@@ -2560,6 +2560,10 @@ static void mxt_set_sensor_state(struct mxt_data *data, int state)
 #ifdef CONFIG_STATE_NOTIFIER
 		state_suspend();
 #endif
+#ifdef CONFIG_CPU_FREQ_GOV_ZZMOOVE
+		// if zzmoove governor is defined call external suspend function
+		zzmoove_suspend();
+#endif
         break;
 
 #ifdef CONFIG_WAKE_GESTURES
@@ -2573,12 +2577,20 @@ static void mxt_set_sensor_state(struct mxt_data *data, int state)
 #ifdef CONFIG_STATE_NOTIFIER
 		state_suspend();
 #endif
+#ifdef CONFIG_CPU_FREQ_GOV_ZZMOOVE
+		// if zzmoove governor is defined call external suspend function
+		zzmoove_suspend();
+#endif
 		break;
 #endif
 
 	case STATE_ACTIVE:
 #ifdef CONFIG_STATE_NOTIFIER
 		state_resume();
+#endif
+#ifdef CONFIG_CPU_FREQ_GOV_ZZMOOVE
+		// if zzmoove governor is defined call external resume function
+		zzmoove_resume();
 #endif
 		if (!data->in_bootloader)
 			mxt_sensor_state_config(data, ACTIVE_IDX);
