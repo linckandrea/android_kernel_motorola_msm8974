@@ -1507,7 +1507,8 @@ out:
 
 static int ksmd_should_run(void)
 {
-    switch (ksm_run_on_suspend) {
+    int value = ksm_run_on_suspend?1:0;
+    switch (value) {
         case 1:
            return (ksm_run & KSM_RUN_MERGE) && !list_empty(&ksm_mm_head.mm_list);
         break;
