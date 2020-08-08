@@ -73,6 +73,12 @@ static int fb_notifier_callback(struct notifier_block *self,
 static void mxt_queued_resume(struct work_struct *w);
 #endif
 
+// controls suspend/resume state in zzmoove governor
+#ifdef CONFIG_CPU_FREQ_GOV_ZZMOOVE
+extern void zzmoove_suspend(void);
+extern void zzmoove_resume(void);
+#endif
+
 #define DRIVER_NAME "atmel_mxt_ts"
 #define MXT_MAX_RETRIES		10
 #define MXT_MAX_BLOCK_WRITE	256

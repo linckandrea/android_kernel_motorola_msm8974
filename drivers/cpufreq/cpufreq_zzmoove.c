@@ -33,11 +33,13 @@
 
 // AP: use msm8974 lcd status notifier
 #define USE_LCD_NOTIFIER
+#define CPU_IDLE_TIME_IN_CPUFREQ
 
 #include <linux/cpu.h>
 #ifdef USE_LCD_NOTIFIER
-#include <linux/lcd_notify.h>
-#endif /* USE_LCD_NOTIFIER */
+#include <linux/state_notifier.h>
+#endif /* USE_STATE_NOTIFIER
+ */
 #include <linux/cpufreq.h>
 #if defined(CONFIG_HAS_EARLYSUSPEND) && !defined(DISABLE_POWER_MANAGEMENT)
 #include <linux/earlysuspend.h>
@@ -476,9 +478,7 @@ static unsigned int disable_hotplug_asleep;			// ZZ: for setting hotplug on/off 
 #endif /* ENABLE_HOTPLUGGING */
 #endif /* (defined(CONFIG_HAS_EARLYSUSPEND)... */
 
-#if defined(USE_LCD_NOTIFIER) && !defined(CONFIG_POWERSUSPEND)
-static struct notifier_block zzmoove_lcd_notif;
-#endif /* defined(USE_LCD_NOTIFIER)... */
+static struct notifier_block state_notifier_hook;
 
 #ifdef ENABLE_INPUTBOOSTER
 // ff: Input Booster variables
@@ -2561,53 +2561,6 @@ static inline void adjust_freq_thresholds(unsigned int step)
 }
 #endif /* ENABLE_AUTO_ADJUST_FREQ */
 
-// ZZ: compatibility with kernel version lower than 3.4
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3,4,0)
-static inline u64 get_cpu_idle_time_jiffy(unsigned int cpu, u64 *wall)
-{
-	u64 idle_time;
-	u64 cur_wall_time;
-	u64 busy_time;
-
-	cur_wall_time = jiffies64_to_cputime64(get_jiffies_64());
-	busy_time = cputime64_add(kstat_cpu(cpu).cpustat.user,
-			kstat_cpu(cpu).cpustat.system);
-
-	busy_time = cputime64_add(busy_time, kstat_cpu(cpu).cpustat.irq);
-	busy_time = cputime64_add(busy_time, kstat_cpu(cpu).cpustat.softirq);
-	busy_time = cputime64_add(busy_time, kstat_cpu(cpu).cpustat.steal);
-	busy_time = cputime64_add(busy_time, kstat_cpu(cpu).cpustat.nice);
-
-	idle_time = cputime64_sub(cur_wall_time, busy_time);
-	if (wall)
-	    *wall = (u64)jiffies_to_usecs(cur_wall_time);
-
-	return (u64)jiffies_to_usecs(idle_time);
-}
-#endif /* LINUX_VERSION_CODE... */
-
-// ZZ: this function is placed here only from kernel version 3.4 to 3.8
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,4,0) && LINUX_VERSION_CODE < KERNEL_VERSION(3,8,0)
-static inline u64 get_cpu_idle_time_jiffy(unsigned int cpu, u64 *wall)
-{
-	u64 idle_time;
-	u64 cur_wall_time;
-	u64 busy_time;
-	cur_wall_time = jiffies64_to_cputime64(get_jiffies_64());
-	busy_time  = kcpustat_cpu(cpu).cpustat[CPUTIME_USER];
-	busy_time += kcpustat_cpu(cpu).cpustat[CPUTIME_SYSTEM];
-	busy_time += kcpustat_cpu(cpu).cpustat[CPUTIME_IRQ];
-	busy_time += kcpustat_cpu(cpu).cpustat[CPUTIME_SOFTIRQ];
-	busy_time += kcpustat_cpu(cpu).cpustat[CPUTIME_STEAL];
-	busy_time += kcpustat_cpu(cpu).cpustat[CPUTIME_NICE];
-
-	idle_time = cur_wall_time - busy_time;
-	if (wall)
-	*wall = jiffies_to_usecs(cur_wall_time);
-	return jiffies_to_usecs(idle_time);
-}
-#endif /* LINUX_VERSION_CODE... */
-
 /*
  * ZZ: function has been moved out of governor since kernel version 3.8 and finally moved to cpufreq.c in kernel version 3.11
  *     overruling macro CPU_IDLE_TIME_IN_CPUFREQ included for sources with backported cpufreq implementation
@@ -3067,7 +3020,7 @@ static ssize_t store_sampling_rate_idle_delay(struct kobject *a, struct attribut
 
 	if (input == 0)
 	    sampling_rate_step_up_delay = 0;
-	    sampling_rate_step_down_delay = 0;
+	sampling_rate_step_down_delay = 0;
 
 #ifdef ENABLE_PROFILES_SUPPORT
 	// ZZ: set profile number to 0 and profile name to custom mode if value has changed
@@ -7798,7 +7751,7 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 
 	    // ZZ: Sampling down momentum - if momentum is inactive switch to 'down_skip' method
 	    if (zz_sampling_down_max_mom == 0 && zz_sampling_down_factor > 1)
-		this_dbs_info->down_skip = 0;
+            this_dbs_info->down_skip = 0;
 
 		// ZZ: Frequency Limit: if we are at freq_limit break out early
 		if (dbs_tuners_ins.freq_limit != 0
@@ -7821,7 +7774,7 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 
 	    // ZZ: Sampling down momentum - if momentum is active and we are switching to max speed, apply sampling_down_factor
 	    if (zz_sampling_down_max_mom != 0 && policy->cur < policy->max)
-		this_dbs_info->rate_mult = zz_sampling_down_factor;
+            this_dbs_info->rate_mult = zz_sampling_down_factor;
 
 		this_dbs_info->requested_freq = zz_get_next_freq(policy->cur, 1, max_load);
 
@@ -8856,13 +8809,13 @@ static int cpufreq_governor_dbs(struct cpufreq_policy *policy,
 		    // policy latency is in nS. Convert it to uS first
 		    latency = policy->cpuinfo.transition_latency / 1000;
 		    if (latency == 0)
-			latency = 1;
+                latency = 1;
 
 			rc = sysfs_create_group(cpufreq_global_kobject,
 						&dbs_attr_group);
 			if (rc) {
 			    mutex_unlock(&dbs_mutex);
-			    return rc;
+                return rc;
 			}
 
 			/*
@@ -9039,12 +8992,12 @@ static int cpufreq_governor_dbs(struct cpufreq_policy *policy,
 
 #if (defined(USE_LCD_NOTIFIER) && !defined(CONFIG_POWERSUSPEND))
 // AP: callback handler for lcd notifier
-static int zzmoove_lcd_notifier_callback(struct notifier_block *this,
+static int state_notifier_call(struct notifier_block *this,
 								unsigned long event, void *data)
 {
 	switch (event)
 	{
-		case LCD_EVENT_OFF_END:
+		case STATE_NOTIFIER_SUSPEND:
 
 			if (!suspend_flag)
 			    zzmoove_suspend();
@@ -9053,7 +9006,7 @@ static int zzmoove_lcd_notifier_callback(struct notifier_block *this,
 #endif /* ZZMOOVE_DEBUG */
 			break;
 
-		case LCD_EVENT_ON_START:
+		case STATE_NOTIFIER_ACTIVE:
 
 			if (suspend_flag)
 			    zzmoove_resume();
@@ -9113,14 +9066,14 @@ static int __init cpufreq_gov_dbs_init(void)						// ZZ: idle exit time handling
     INIT_WORK(&hotplug_online_work, hotplug_online_work_fn);				// ZZ: init hotplug online work
 #endif /* ENABLE_HOTPLUGGING */
 
-#if (defined(USE_LCD_NOTIFIER) && !defined(CONFIG_POWERSUSPEND))
 	// AP: register callback handler for lcd notifier
-	zzmoove_lcd_notif.notifier_call = zzmoove_lcd_notifier_callback;
-	if (lcd_register_client(&zzmoove_lcd_notif) != 0) {
+	state_notifier_hook.notifier_call = state_notifier_call;
+	if (state_register_client(&state_notifier_hook)) {
 		pr_err("%s: Failed to register lcd callback\n", __func__);
 		return -EFAULT;
 	}
-#endif /* (defined(USE_LCD_NOTIFIER)... */
+    
+    /* (defined(USE_LCD_NOTIFIER)... */
 	return cpufreq_register_governor(&cpufreq_gov_zzmoove);
 }
 
@@ -9133,7 +9086,7 @@ static void __exit cpufreq_gov_dbs_exit(void)
 #endif /* ENABLE_WORK_RESTARTLOOP */
 
 #if (defined(USE_LCD_NOTIFIER) && !defined(CONFIG_POWERSUSPEND))
-	lcd_unregister_client(&zzmoove_lcd_notif);
+	state_register_client(&state_notifier_hook);
 #endif /* (defined(USE_LCD_NOTIFIER)... */
 }
 
