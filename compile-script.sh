@@ -20,3 +20,9 @@ echo
 
 make O=out lineageos_victara_defconfig
 make O=out -j$(nproc --all)
+
+rm ./victara-anykernel/zImage-dtb
+cp ./out/arch/arm/boot/zImage-dtb ./victara-anykernel
+cd victara-anykernel
+zip -r9 Pop_kernel-victara-Q-rx-x.zip * -x .git README.md *placeholder
+cd ..
