@@ -65,6 +65,8 @@ include/linux/version.h
 include/generated
 arch/*/include/generated
 arch/arm/mach-msm/smd_rpc_sym.c
+victara-anykernel/Pop_kernel-victara-Q*
+victara-anykernel/zImage-dtb
 
 # stgit generated dirs
 patches-*
