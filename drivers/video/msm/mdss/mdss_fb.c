@@ -301,9 +301,9 @@ static void mdss_fb_parse_dt(struct msm_fb_data_type *mfd)
 
 static int pcc_r = 32768, pcc_g = 32768, pcc_b = 32768;
 static ssize_t mdss_get_rgb(struct device *dev,
-		struct device_attribute *attr, char *buf)
+	struct device_attribute *attr, char *buf)
 {
-    u32 copyback = 0;
+	u32 copyback = 0;
 	struct mdp_pcc_cfg_data pcc_cfg;
 
 	memset(&pcc_cfg, 0, sizeof(struct mdp_pcc_cfg_data));
@@ -337,14 +337,14 @@ static ssize_t mdss_get_rgb(struct device *dev,
  * http://www.vendian.org/mncharity/dir3/blackbody/UnstableURLs/bbr_color.html
  */
 static ssize_t mdss_set_rgb(struct device *dev,
-							struct device_attribute *attr,
-							const char *buf, size_t count)
+	struct device_attribute *attr,
+	const char *buf, size_t count)
 {
 	uint32_t r = 0, g = 0, b = 0;
 	struct mdp_pcc_cfg_data pcc_cfg;
 	u32 copyback = 0;
 
-    if (count > 19)
+	if (count > 19)
 		return -EINVAL;
 
 	sscanf(buf, "%d %d %d", &r, &g, &b);
@@ -356,7 +356,7 @@ static ssize_t mdss_set_rgb(struct device *dev,
 	if (b < 0 || b > 32768)
 		return -EINVAL;
 
-	pr_info("%s: r=%d g=%d b=%d", __func__, r, g, b);
+	pr_info("%s: r=%d g=%d b=%d\n", __func__, r, g, b);
 
 	memset(&pcc_cfg, 0, sizeof(struct mdp_pcc_cfg_data));
 
@@ -584,7 +584,6 @@ static struct attribute *mdss_fb_attrs[] = {
 	&dev_attr_idle_time.attr,
 	&dev_attr_idle_notify.attr,
 	&dev_attr_msm_fb_panel_info.attr,
-	&dev_attr_rgb.attr,
 	NULL,
 };
 
