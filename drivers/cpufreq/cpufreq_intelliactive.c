@@ -404,6 +404,8 @@ static void cpufreq_interactive_timer(unsigned long data)
 		}
 	}
   
+    cpufreq_notify_utilization(pcpu->policy, cpu_load);
+    
 	if (cpu_load >= go_hispeed_load || (boosted && is_display_on())) {
 		if (pcpu->target_freq < hispeed_freq) {
 			nr_cpus = num_online_cpus();
