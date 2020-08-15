@@ -52,10 +52,10 @@ on property:sys.boot_completed=1
     # Sultan's CPU Input Boost (disabled by default)
     write /sys/kernel/cpu_input_boost/ib_freqs "1190400 1497600"
     write /sys/kernel/cpu_input_boost/ib_duration_ms 1400
-    write /sys/kernel/cpu_input_boost/enabled 1
+    write /sys/kernel/cpu_input_boost/enabled 0
     
     # CAF CPU Input Boost (enabled by default)
-    write /sysy/module/cpu_boost/parameters/input_boost_enabled 0
+    write /sysy/module/cpu_boost/parameters/input_boost_enabled 1
     write /sys/module/cpu_boost/parameters/boost_ms 0
     write /sys/module/cpu_boost/parameters/sync_threshold 0
     write /sys/module/cpu_boost/parameters/input_boost_freq 1190400
