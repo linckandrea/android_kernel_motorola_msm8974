@@ -83,6 +83,10 @@
 #define CREATE_TRACE_POINTS
 #include <trace/events/task.h>
 
+/* module_param to allow boost app to max cpu freq when apps are launched */
+static bool boost_when_app_is_launched = 0;
+module_param(boost_when_app_is_launched, bool, 0644);
+
 /*
  * Protected counters by write_lock_irq(&tasklist_lock)
  */
@@ -1626,9 +1630,11 @@ long do_fork(unsigned long clone_flags,
 	int trace = 0;
 	long nr;
 
-	if (is_zygote_pid(current->pid))
-		do_input_boost_max();
-
+    if (boost_when_app_is_launched) {
+        if (is_zygote_pid(current->pid))
+            do_input_boost_max();
+    }
+        
 	/*
 	 * Do some preliminary argument and permissions checking before we
 	 * actually start allocating stuff
