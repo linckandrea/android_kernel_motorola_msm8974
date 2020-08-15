@@ -17,6 +17,8 @@ obj-$(CONFIG_CPU_FREQ_GOV_PEGASUSQ)	+= cpufreq_pegasusq.o
 obj-$(CONFIG_CPU_FREQ_GOV_SMARTMAX_EPS)     += cpufreq_smartmax_eps.o
 obj-$(CONFIG_CPU_FREQ_GOV_SMARTMAX)     += cpufreq_smartmax.o
 obj-$(CONFIG_CPU_FREQ_GOV_ZZMOOVE)	  += cpufreq_zzmoove.o
+obj-$(CONFIG_CPU_FREQ_GOV_BLU_ACTIVE)   += cpufreq_blu_active.o
+
 obj-$(CONFIG_CPU_BOOST)			+= cpu-boost.o
 
 # CPU Input Boost
