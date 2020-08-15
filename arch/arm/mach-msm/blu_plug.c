@@ -27,10 +27,10 @@
 #include <linux/delay.h>
 #include <linux/slab.h>
 
-#define BLU_PLUG_ENABLED 1
+#define BLU_PLUG_ENABLED 0
 #define INIT_DELAY		20000
 #define DELAY			100
-#define UP_THRESHOLD		85
+#define UP_THRESHOLD		100
 #define MIN_ONLINE		1
 #define MAX_ONLINE		4
 #define DEF_DOWN_TIMER_CNT	8
