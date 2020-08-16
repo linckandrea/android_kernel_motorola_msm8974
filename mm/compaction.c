@@ -25,7 +25,7 @@
 
 /* parameter to enable/disable zones compation and drop cache while screen is off */
 static bool enable_compaction_drop_cache = 0;
-module_param(enable_compaction_drop_cache, bool, 0);
+module_param(enable_compaction_drop_cache, bool, 0644);
 
 #ifdef CONFIG_COMPACTION
 static inline void count_compact_event(enum vm_event_item item)
