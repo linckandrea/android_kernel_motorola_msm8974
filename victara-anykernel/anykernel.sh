@@ -66,11 +66,11 @@ insert_line "/system/vendor/etc/init/hw/init.qcom.rc" "init.pop.rc" after "impor
 chmod 644 /system/vendor/etc/init/hw/init.pop.rc;
 
 # kill lineageos livedisplay... pop kernel use klapse as livedisplay driver
-rm -f /system/etc/init/lineage-livedisplay.rc
-rm -f /system/etc/permissions/org.lineageos.livedisplay.xml
-rm -f /system/vendor/bin/hw/vendor.lineage.livedisplay@2.0-service-sysfs
-rm -f /system/vendor/etc/init/vendor.lineage.livedisplay@2.0-service-sysfs.rc
-rm -f /system/lib/vendor.lineage.livedisplay@2.0.so
+#rm -f /system/etc/init/lineage-livedisplay.rc
+#rm -f /system/etc/permissions/org.lineageos.livedisplay.xml
+#rm -f /system/vendor/bin/hw/vendor.lineage.livedisplay@2.0-service-sysfs
+#rm -f /system/vendor/etc/init/vendor.lineage.livedisplay@2.0-service-sysfs.rc
+#rm -f /system/lib/vendor.lineage.livedisplay@2.0.so
 
 # end ramdisk changes
 
