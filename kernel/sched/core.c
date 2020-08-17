@@ -1932,7 +1932,6 @@ stat:
                                         sysctl_sched_wakeup_load_threshold))
 			notify = 1;
         }
-#endif
 
 out:
 	raw_spin_unlock_irqrestore(&p->pi_lock, flags);
