@@ -366,12 +366,13 @@ struct rq {
 	unsigned long nohz_flags;
 #endif
 	int skip_clock_update;
-
+    
 	/* time-based average load */
 	u64 nr_last_stamp;
 	unsigned int ave_nr_running;
+	u64 nr_running_integral;
 	seqcount_t ave_seqcnt;
-
+    
 	/* capture load from *all* tasks on this cpu: */
 	struct load_weight load;
 	unsigned long nr_load_updates;
@@ -963,6 +964,7 @@ extern void cpuacct_charge(struct task_struct *tsk, u64 cputime);
 static inline void cpuacct_charge(struct task_struct *tsk, u64 cputime) {}
 #endif
 
+<<<<<<< HEAD
 /* 27 ~= 134217728ns = 134.2ms
  * 26 ~=  67108864ns =  67.1ms
  * 25 ~=  33554432ns =  33.5ms
@@ -972,11 +974,21 @@ static inline void cpuacct_charge(struct task_struct *tsk, u64 cputime) {}
 #define NR_AVE_SCALE(x)                ((x) << FSHIFT)
 #define NR_AVE_PERIOD          (1 << NR_AVE_PERIOD_EXP)
 #define NR_AVE_DIV_PERIOD(x)   ((x) >> NR_AVE_PERIOD_EXP)
+=======
+#define NR_AVE_PERIOD_EXP	28
+#define NR_AVE_SCALE(x)		((x) << FSHIFT)
+#define NR_AVE_PERIOD		(1 << NR_AVE_PERIOD_EXP)
+#define NR_AVE_DIV_PERIOD(x)	((x) >> NR_AVE_PERIOD_EXP)
+>>>>>>> parent of 7f6ce70089a... Revert "sched: compatibility fix up for lazyplug"
 
 static inline unsigned int do_avg_nr_running(struct rq *rq)
 {
 	s64 nr, deltax;
+<<<<<<< HEAD
 	unsigned int ave_nr_running = rq->ave_nr_running;
+=======
+	unsigned int ave_nr_running= rq->ave_nr_running;
+>>>>>>> parent of 7f6ce70089a... Revert "sched: compatibility fix up for lazyplug"
 
 	deltax = rq->clock_task - rq->nr_last_stamp;
 	nr = NR_AVE_SCALE(rq->nr_running);
