@@ -577,9 +577,6 @@ endif # $(dot-config)
 # Defaults to vmlinux, but the arch makefile usually adds further targets
 all: vmlinux
 
-# Needed to unbreak GCC 7.x and above
-KBUILD_CFLAGS   += $(call cc-option,-fno-store-merging,)
-
 # Disable unused-constant-variable warnings
 KBUILD_CFLAGS	+= $(call cc-disable-warning,unused-const-variable,)
 
@@ -589,7 +586,7 @@ KBUILD_CFLAGS   += $(call cc-disable-warning,format-truncation,)
 ####################
 # Optimization flags
 ####################
-KBUILD_CFLAGS   += $(call cc-option, -mcpu=cortex-a15,) \
+#KBUILD_CFLAGS   += $(call cc-option, -mcpu=cortex-a15,) \
 		   $(call cc-option, -mtune=cortex-a15,) \
 		   $(call cc-option, -mfpu=neon-vfpv4,) \
 		   $(call cc-option, -mvectorize-with-neon-quad,) \
