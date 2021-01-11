@@ -5,7 +5,7 @@ echo
 mkdir -p out
 export ARCH=arm
 export SUBARCH=arm
-export CROSS_COMPILE=/home/andrea/arm-eabi-linaro-7/bin/arm-eabi-
+export CROSS_COMPILE=/home/andrea/android/TC/bin/arm-eabi-
 
 echo
 echo "Clean up"
